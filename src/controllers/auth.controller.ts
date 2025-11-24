@@ -10,10 +10,8 @@ export const googleAuth = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid Google data" });
     }
 
-    // 1️⃣ FIND USER BY EMAIL
     let user = await User.findOne({ email });
 
-    // 2️⃣ IF NOT FOUND → CREATE USER
     if (!user) {
       user = await User.create({
         name,
@@ -24,7 +22,6 @@ export const googleAuth = async (req: Request, res: Response) => {
       });
     }
 
-    // 3️⃣ CREATE TOKEN
     const token = generateToken(user._id.toString());
 
     return res.status(200).json({
