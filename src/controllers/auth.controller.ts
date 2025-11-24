@@ -10,20 +10,21 @@ export const googleAuth = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid Google data" });
     }
 
-    // Check if user already exists
+    // 1️⃣ FIND USER BY EMAIL
     let user = await User.findOne({ email });
 
+    // 2️⃣ IF NOT FOUND → CREATE USER
     if (!user) {
-      // Create new user
       user = await User.create({
         name,
         email,
         profileImage,
         firebaseUid: uid,
+        role: email.includes("admin") ? "admin" : "client",
       });
     }
 
-    // Create JWT
+    // 3️⃣ CREATE TOKEN
     const token = generateToken(user._id.toString());
 
     return res.status(200).json({
