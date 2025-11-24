@@ -10,7 +10,7 @@ export const googleAuth = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid Google data" });
     }
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email }).select("+role");
 
     if (!user) {
       user = await User.create({
@@ -27,7 +27,14 @@ export const googleAuth = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Success",
       token,
-      user,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profileImage,
+        firebaseUid: user.firebaseUid,
+        role: user.role,
+      },
     });
   } catch (error) {
     console.error("Google Auth Error:", error);

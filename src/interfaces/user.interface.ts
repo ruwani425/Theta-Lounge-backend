@@ -3,4 +3,5 @@ export interface IUser {
   email: string;
   profileImage: string;
   firebaseUid: string;
+  role: "admin" | "client";
 }
