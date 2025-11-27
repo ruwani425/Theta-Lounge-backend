@@ -3,6 +3,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes";
 import adminRoutes from "./routes/admin.routes";
 import tankRoutes from "./routes/tank.routes";
+import calendarRoutes from "./routes/calendar.routes"
 
 const app = express();
 
@@ -16,5 +17,6 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/system-settings", adminRoutes);
 app.use("/api/tanks", tankRoutes);
+app.use("/api/calendar", calendarRoutes)
 
 export default app;
