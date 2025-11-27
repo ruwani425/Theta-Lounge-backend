@@ -3,31 +3,62 @@ import SystemSettingsModel from "../models/settings.model";
 
 export const saveSystemSettings = async (req: Request, res: Response) => {
   try {
-    const settings = req.body;
+    const {
+      defaultFloatPrice,
+      cleaningBuffer,
+      sessionsPerDay,
+      openTime,
+      closeTime,
+    } = req.body;
 
-    // ✅ Only allow ONE settings document in DB
+    // ✅ Validation
+    if (
+      defaultFloatPrice === undefined ||
+      cleaningBuffer === undefined ||
+      sessionsPerDay === undefined ||
+      !openTime ||
+      !closeTime
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const settingsData = {
+      defaultFloatPrice,
+      cleaningBuffer,
+      sessionsPerDay,
+      openTime,
+      closeTime,
+    };
+
+    // ✅ Allow ONLY one settings row
     const existingSettings = await SystemSettingsModel.findOne();
 
     if (existingSettings) {
-      await SystemSettingsModel.findByIdAndUpdate(existingSettings._id, settings, { new: true });
+      await SystemSettingsModel.findByIdAndUpdate(
+        existingSettings._id,
+        settingsData,
+        { new: true }
+      );
+
       return res.status(200).json({
         message: "Settings updated successfully",
       });
     }
 
-    const newSettings = new SystemSettingsModel(settings);
+    const newSettings = new SystemSettingsModel(settingsData);
     await newSettings.save();
 
     res.status(201).json({
       message: "Settings created successfully",
     });
+
   } catch (error) {
     console.error("Error saving settings:", error);
     res.status(500).json({ message: "Failed to save settings" });
   }
 };
 
-// ✅ Optional GET API to load settings into UI
+// ✅ GET API FOR FRONTEND LOAD
 export const getSystemSettings = async (req: Request, res: Response) => {
   try {
     const settings = await SystemSettingsModel.findOne();
