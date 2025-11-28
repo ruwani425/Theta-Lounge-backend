@@ -5,15 +5,15 @@ import CalendarDetail from "../models/calendar-detail.model";
 export const saveCalendarDay = async (req: Request, res: Response) => {
     try {
         // FIX 1: Extract tankId from the request body
-        const { tankId, date, status, openTime, closeTime, sessionsToSell } = req.body;
+        const {date, status, openTime, closeTime, sessionsToSell } = req.body;
 
         // Validation Check (Optional but recommended, especially if you remove required checks elsewhere)
-        if (!tankId || !date) {
+        if (!date) {
             return res.status(400).json({ success: false, message: "Missing required fields: tankId or date." });
         }
 
         // FIX 2: Find the existing record by both date AND tankId
-        let record = await CalendarDetail.findOne({ tankId, date });
+        let record = await CalendarDetail.findOne({ date });
 
         if (record) {
             // Update existing record
@@ -24,20 +24,15 @@ export const saveCalendarDay = async (req: Request, res: Response) => {
             
             await record.save();
             
-            console.log(`Updated Calendar Detail for Tank ${tankId} on ${date}.`);
-
         } else {
             // Create new record, including tankId
             record = await CalendarDetail.create({ 
-                tankId, // <<< Saved tankId
                 date, 
                 status, 
                 openTime, 
                 closeTime, 
                 sessionsToSell 
             });
-            
-            console.log(`Created new Calendar Detail for Tank ${tankId} on ${date}.`);
         }
 
         res.json({ success: true, data: record });
