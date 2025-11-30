@@ -5,9 +5,8 @@ export interface ITank extends Document {
   capacity: number;
   length: number;
   width: number;
-  sessionDuration: number;
-  basePrice: number;
   benefits: string;
+  status: string;
   createdAt: Date;
 }
 
@@ -17,9 +16,8 @@ const TankSchema: Schema = new Schema(
     capacity: { type: Number, required: true },
     length: { type: Number, required: true },
     width: { type: Number, required: true },
-    sessionDuration: { type: Number, required: true },
-    basePrice: { type: Number, required: true },
     benefits: { type: String, required: true },
+    status: { type: String, required: true },
   },
   { timestamps: true } // automatically adds createdAt & updatedAt
 );

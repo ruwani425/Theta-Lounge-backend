@@ -3,7 +3,6 @@ interface TankDTO {
   capacity: number;
   length: number;
   width: number;
-  sessionDuration: number;
-  basePrice: number;
   benefits: string;
+  status: string;
 }
