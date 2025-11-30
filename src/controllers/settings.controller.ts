@@ -7,6 +7,7 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
     const {
       defaultFloatPrice,
       cleaningBuffer,
+      sessionDuration,
       sessionsPerDay,
       openTime,
       closeTime,
@@ -16,6 +17,7 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
     if (
       defaultFloatPrice === undefined ||
       cleaningBuffer === undefined ||
+      sessionDuration === undefined ||
       sessionsPerDay === undefined ||
       !openTime ||
       !closeTime
@@ -26,6 +28,7 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
     const settingsData = {
       defaultFloatPrice,
       cleaningBuffer,
+      sessionDuration,
       sessionsPerDay,
       openTime,
       closeTime,
