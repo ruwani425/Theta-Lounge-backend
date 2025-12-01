@@ -36,7 +36,7 @@ export const getLastTank = async (req: Request, res: Response) => {
 
 export const getAllTanks = async (req:Request, res:Response) => {
   try {
-    const tanks = await Tank.find(); // Assuming MongoDB / Mongoose
+    const tanks = await Tank.find();
     res.json(tanks);
   } catch (error) {
     console.error("Failed to fetch tanks", error);
