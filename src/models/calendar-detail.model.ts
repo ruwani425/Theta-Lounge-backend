@@ -7,6 +7,7 @@ const calendarDetailSchema = new Schema<ICalendarDetail>({
     status: { type: String, enum: ["Bookable", "Closed", "Sold Out"], default: "Bookable" },
     openTime: { type: String },
     closeTime: { type: String },
+    sessionsToSell: { type: Number, default: 1 }
 });
 
 // FIX 2: Add compound unique index on tankId and date

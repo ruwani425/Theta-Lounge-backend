@@ -6,4 +6,5 @@ export interface ICalendarDetail {
     status: "Bookable" | "Closed" | "Sold Out";
     openTime?: string;
     closeTime?: string;
+    sessionsToSell: number;
 }

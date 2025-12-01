@@ -140,3 +140,56 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
         });
     }
 };
+
+// src/controllers/appointment.controller.ts (or wherever this function resides)
+
+export const getAppointmentDetails = async (req: Request, res: Response) => {
+    // startDate and endDate are now optional
+    const { startDate, endDate } = req.query;
+
+    // REMOVE the check that throws the 400 error:
+    // if (!startDate || !endDate) {
+    //     return res.status(400).json({ 
+    //         success: false, 
+    //         message: 'Missing required query parameters: startDate and endDate.' 
+    //     });
+    // }
+
+    try {
+        // 1. Build the filter object
+        const filter: any = {};
+        
+        // 2. Add date range filter ONLY IF both parameters are provided
+        if (startDate && endDate) {
+            filter.date = {
+                $gte: startDate as string,
+                $lte: endDate as string
+            };
+        }
+        
+        // 3. (Optional) Filter by status only if you want to exclude 'Cancelled' by default
+        // If you want ALL appointments, remove the status filter entirely.
+        // For displaying all appointments in a list, it's usually better to get all.
+        // I will remove the status filter to get ALL appointments as requested.
+        // filter.status = { $in: ['Pending', 'Confirmed'] }; 
+
+        // Fetch ALL fields since the frontend needs more than just date/time
+        const appointments = await AppointmentModel.find(
+            filter,
+            // Projection: Remove the projection to include all fields for the table display
+            // { date: 1, time: 1, _id: 0 } 
+        ).lean(); 
+
+        res.status(200).json({
+            success: true,
+            message: 'Appointment details retrieved successfully.',
+            data: appointments, // Send the full appointment data
+        });
+    } catch (error) {
+        console.error('Error fetching appointment details:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to retrieve appointment details due to a server error.' 
+        });
+    }
+};
