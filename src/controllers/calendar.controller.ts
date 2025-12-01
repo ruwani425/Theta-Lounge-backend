@@ -5,7 +5,7 @@ import CalendarDetail from "../models/calendar-detail.model";
 export const saveCalendarDay = async (req: Request, res: Response) => {
     try {
         // FIX 1: Extract tankId from the request body
-        const {date, status, openTime, closeTime, sessionsToSell } = req.body;
+        const {date, status, openTime, closeTime } = req.body;
 
         // Validation Check (Optional but recommended, especially if you remove required checks elsewhere)
         if (!date) {
@@ -19,9 +19,7 @@ export const saveCalendarDay = async (req: Request, res: Response) => {
             // Update existing record
             record.status = status ?? record.status;
             record.openTime = openTime ?? record.openTime;
-            record.closeTime = closeTime ?? record.closeTime;
-            record.sessionsToSell = sessionsToSell ?? record.sessionsToSell;
-            
+            record.closeTime = closeTime ?? record.closeTime;            
             await record.save();
             
         } else {
@@ -31,7 +29,6 @@ export const saveCalendarDay = async (req: Request, res: Response) => {
                 status, 
                 openTime, 
                 closeTime, 
-                sessionsToSell 
             });
         }
 

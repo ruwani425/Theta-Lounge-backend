@@ -15,3 +15,11 @@ export interface IAppointment extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
+
+interface AppointmentCount {
+    _id: {
+        date: string;
+        status: 'Pending' | 'Confirmed' | 'Canceled';
+    };
+    count: number;
+}
