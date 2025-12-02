@@ -6,6 +6,7 @@ import { Document } from 'mongoose';
  * Defines the structure for a new Appointment document.
  */
 export interface IAppointment extends Document {
+    name: string;
     date: string;         // YYYY-MM-DD
     time: string;         // HH:MM AM/PM format (the selected slot)
     email: string;        // Customer's email address

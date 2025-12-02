@@ -4,6 +4,10 @@ import mongoose, { Schema, Model } from 'mongoose';
 import { IAppointment } from '../interfaces/appointment.interface';
 
 const AppointmentSchema: Schema<IAppointment> = new Schema({
+    name: {
+        type: String,
+        required: true,
+    },
     date: { 
         type: String, 
         required: true,
