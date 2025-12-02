@@ -4,12 +4,10 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import AppointmentModel from '../models/appointment.model';
 import CalendarDetailModel from '../models/calendar-detail.model';
-import { IAppointment } from '../interfaces/appointment.interface';
+import { AppointmentCount, IAppointment } from '../interfaces/appointment.interface';
 import { ICalendarDetail } from '../interfaces/calendar.interface';
 
-// --- Utility Functions (for calculating sessions when no record exists) ---
 
-// Helper to convert time string (HH:MM) to total minutes from midnight
 const timeToMinutes = (time: string): number => {
     try {
         const [hours, minutes] = time.split(':').map(Number);
@@ -20,14 +18,9 @@ const timeToMinutes = (time: string): number => {
     }
 };
 
-// Calculates total sessions based on staggered tank logic
 const calculateStaggeredSessions = (
-    openTime: string,
-    closeTime: string,
-    duration: number, // sessionDuration
-    buffer: number, // cleaningBuffer
-    numberOfTanks: number,
-    staggerInterval: number,
+    openTime: string, closeTime: string, duration: number, buffer: number, 
+    numberOfTanks: number, staggerInterval: number,
 ): {
     sessionsPerTank: number;
     actualCloseTime: string;
@@ -70,20 +63,13 @@ const calculateStaggeredSessions = (
     };
 };
 
-// --- Main Transactional Controller ---
 
-/**
- * Creates a new appointment booking and atomically updates the calendar count.
- * POST /api/appointments
- */
 export const createAppointment = async (req: Request, res: Response) => {
-    // 1. Destructure fields from the frontend payload (root and context)
     const { 
         name, date, time, email, contactNumber, specialNote,
         calendarContext 
     } = req.body;
 
-    // Basic required field validation (must match frontend root fields)
     if (!date || !time || !email || !contactNumber || !name || !calendarContext) {
         return res.status(400).json({ 
             success: false, 
@@ -92,14 +78,13 @@ export const createAppointment = async (req: Request, res: Response) => {
     }
 
     const newAppointmentData: Partial<IAppointment> = {
-        name, date, time, email, contactNumber, specialNote, status: 'Pending',
+        name, date, time, email, contactNumber, specialNote, status: 'pending',
     };
     
     const { 
         defaultSystemSettings,
     } = calendarContext;
 
-    // Start Mongoose Session for Atomic Transaction
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -108,17 +93,12 @@ export const createAppointment = async (req: Request, res: Response) => {
         let calendarRecord: (ICalendarDetail & mongoose.Document) | null = null;
         let isNewCalendarRecord = false;
 
-        // --- PHASE 1: Determine the starting session count ---
-        
-        // Find the existing calendar record within the session
         calendarRecord = await CalendarDetailModel.findOne({ date: date }).session(session);
         
         if (calendarRecord) {
-            // Case A: Record exists, use its current sessionsToSell count
             finalSessionsToSell = calendarRecord.sessionsToSell;
             
         } else {
-            // Case B: No record exists, calculate from defaults 
             isNewCalendarRecord = true;
             const settings = defaultSystemSettings;
             
@@ -134,21 +114,15 @@ export const createAppointment = async (req: Request, res: Response) => {
             finalSessionsToSell = totalSessions;
         }
 
-        // --- PHASE 2: Validate and Update/Create Logic ---
-        
         if (finalSessionsToSell <= 0) {
-            // Check for availability
             throw new Error('Sold Out: No available sessions for this date.');
         }
 
         const newSessionsToSell = finalSessionsToSell - 1;
 
-        // 1. Create the Appointment (Must succeed for the transaction to commit)
         const newAppointment = await AppointmentModel.create([newAppointmentData as IAppointment], { session });
 
-        // 2. Update/Create the Calendar Detail
         if (isNewCalendarRecord) {
-            // Create New Record
             const newCalendarData: Partial<ICalendarDetail> = {
                 date: date,
                 status: newSessionsToSell > 0 ? 'Bookable' : 'Sold Out',
@@ -158,7 +132,6 @@ export const createAppointment = async (req: Request, res: Response) => {
             };
             await CalendarDetailModel.create([newCalendarData as ICalendarDetail], { session });
         } else {
-            // Update Existing Record
             if (calendarRecord) {
                 calendarRecord.sessionsToSell = newSessionsToSell;
                 calendarRecord.status = newSessionsToSell > 0 ? 'Bookable' : 'Sold Out';
@@ -166,18 +139,21 @@ export const createAppointment = async (req: Request, res: Response) => {
             }
         }
 
-        // --- PHASE 3: Commit and Respond ---
         await session.commitTransaction();
         session.endSession();
+
+        const responseAppointment = {
+            ...newAppointment[0].toObject(),
+            status: newAppointment[0].status.toLowerCase(),
+        };
 
         res.status(201).json({
             success: true,
             message: 'Appointment successfully created and calendar updated.',
-            data: newAppointment[0], // Return the saved appointment object
+            data: responseAppointment,
         });
         
     } catch (error: any) {
-        // Rollback the transaction if any error occurred (e.g., Sold Out, DB error)
         await session.abortTransaction();
         session.endSession();
         
@@ -195,24 +171,38 @@ export const createAppointment = async (req: Request, res: Response) => {
     }
 };
 
-// --- Existing Controllers (Retained) ---
+export const updateAppointmentStatus = async (req: Request, res: Response) => {
+    try {
+        const appointmentId = req.params.id;
+        const { status: uiStatus } = req.body; 
 
-/**
- * Interface for the MongoDB aggregation output structure.
- */
-interface AppointmentCount {
-    _id: {
-        date: string;
-        status: 'Pending' | 'Confirmed' | 'Canceled';
-    };
-    count: number;
-}
+        const updatedAppointment = await AppointmentModel.findByIdAndUpdate(
+            appointmentId,
+            { $set: { status: uiStatus } },
+            { new: true, runValidators: true }
+        );
 
+        if (!updatedAppointment) {
+            return res.status(404).json({ success: false, message: "Appointment not found." });
+        }
 
-/**
- * Retrieves appointment counts aggregated by date and status for a given range.
- * GET /api/appointments/counts?startDate=...&endDate=...
- */
+        const responseAppointment = {
+            ...updatedAppointment.toObject(),
+            status: updatedAppointment.status.toLowerCase(), 
+        };
+
+        res.status(200).json({
+            success: true,
+            message: `Appointment status updated to ${uiStatus}.`,
+            data: responseAppointment,
+        });
+
+    } catch (error) {
+        console.error("Error updating appointment status:", error);
+        res.status(500).json({ success: false, message: "Failed to update appointment status." });
+    }
+};
+
 export const getAppointmentCounts = async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
@@ -224,30 +214,21 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
     }
 
     try {
-        // Mongoose aggregation pipeline to count bookings
         const counts: AppointmentCount[] = await AppointmentModel.aggregate([
             {
                 $match: {
-                    date: {
-                        $gte: startDate as string, 
-                        $lte: endDate as string
-                    },
-                    // Only count appointments that indicate a slot is taken
-                    status: { $in: ['Pending', 'Confirmed'] } 
+                    date: { $gte: startDate as string, $lte: endDate as string },
+                    status: { $in: ['pending', 'cancelled'] } 
                 }
             },
             {
                 $group: {
-                    _id: {
-                        date: "$date",
-                        status: "$status" 
-                    },
+                    _id: { date: "$date", status: "$status" },
                     count: { $sum: 1 }
                 }
             }
         ]);
 
-        // Process the aggregation result: Calculate the total count per date 
         const totalBookedSessionsByDate: Record<string, number> = {};
         
         counts.forEach(item => {
@@ -255,7 +236,6 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
             totalBookedSessionsByDate[dateKey] = (totalBookedSessionsByDate[dateKey] || 0) + item.count;
         });
         
-        // Convert map back to the desired array format for the frontend
         const bookedSessionsArray = Object.keys(totalBookedSessionsByDate).map(date => ({
             date: date,
             count: totalBookedSessionsByDate[date] 
@@ -269,10 +249,7 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('Error fetching appointment counts:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to retrieve appointment counts due to a server error.' 
-        });
+        res.status(500).json({ success: false, message: 'Failed to retrieve appointment counts due to a server error.' });
     }
 };
 
@@ -284,24 +261,23 @@ export const getAppointmentDetails = async (req: Request, res: Response) => {
         const filter: any = {};
         
         if (startDate && endDate) {
-            filter.date = {
-                $gte: startDate as string,
-                $lte: endDate as string
-            };
+            filter.date = { $gte: startDate as string, $lte: endDate as string };
         }
         
         const appointments = await AppointmentModel.find(filter).lean(); 
 
+        const responseAppointments = appointments.map(app => ({
+            ...app,
+            status: app.status.toLowerCase(),
+        }));
+
         res.status(200).json({
             success: true,
             message: 'Appointment details retrieved successfully.',
-            data: appointments, 
+            data: responseAppointments, 
         });
     } catch (error) {
         console.error('Error fetching appointment details:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to retrieve appointment details due to a server error.' 
-        });
+        res.status(500).json({ success: false, message: 'Failed to retrieve appointment details due to a server error.' });
     }
 };

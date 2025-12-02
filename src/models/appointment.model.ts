@@ -11,14 +11,11 @@ const AppointmentSchema: Schema<IAppointment> = new Schema({
     date: { 
         type: String, 
         required: true,
-        // Enforce YYYY-MM-DD format if possible at the schema level
         match: /^\d{4}-\d{2}-\d{2}$/,
     },
     time: {
         type: String,
         required: true,
-        // Example: Enforce HH:MM AM/PM format
-        // match: /^\d{1,2}:\d{2} (AM|PM)$/
     },
     email: {
         type: String,
@@ -37,8 +34,8 @@ const AppointmentSchema: Schema<IAppointment> = new Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Confirmed', 'Canceled'],
-        default: 'Pending',
+        enum: ['pending', 'cancelled', 'completed'],
+        default: 'pending',
     },
 }, { 
     timestamps: true 
