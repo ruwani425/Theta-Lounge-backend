@@ -203,6 +203,14 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
     }
 };
 
+// src/controllers/appointment.controller.ts
+
+// ... (existing imports and other controller logic)
+
+/**
+ * Retrieves appointment counts aggregated by date and status for a given range.
+ * GET /api/appointments/counts
+ */
 export const getAppointmentCounts = async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
@@ -218,7 +226,8 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
             {
                 $match: {
                     date: { $gte: startDate as string, $lte: endDate as string },
-                    status: { $in: ['pending', 'cancelled'] } 
+                    // FIX: Include 'pending' AND 'completed' appointments to calculate total booked sessions (excluding 'canceled').
+                    status: { $in: ['pending', 'completed'] } 
                 }
             },
             {
@@ -245,14 +254,13 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
         res.status(200).json({
             success: true,
             message: 'Appointment counts retrieved successfully.',
-            data: bookedSessionsArray,
+            data: bookedSessionsArray, // This now contains booked (non-canceled) sessions per date
         });
     } catch (error) {
         console.error('Error fetching appointment counts:', error);
         res.status(500).json({ success: false, message: 'Failed to retrieve appointment counts due to a server error.' });
     }
 };
-
 
 export const getAppointmentDetails = async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
@@ -281,3 +289,47 @@ export const getAppointmentDetails = async (req: Request, res: Response) => {
         res.status(500).json({ success: false, message: 'Failed to retrieve appointment details due to a server error.' });
     }
 };
+
+
+/**
+ * Retrieves all booked times for a specific date.
+ * GET /api/appointments/booked-times/:date
+ * Returns array of booked times (HH:MM format) for that date
+ */
+export const getBookedTimesByDate = async (req: Request, res: Response) => {
+  const { date } = req.params
+
+  if (!date) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required parameter: date.",
+    })
+  }
+
+  try {
+    // Fetch all pending and completed appointments for the specific date
+    const appointments = await AppointmentModel.find({
+      date: date,
+      status: { $in: ["pending", "completed"] },
+    })
+      .select("time")
+      .lean()
+
+    // Extract and deduplicate booked times
+    const bookedTimes = Array.from(new Set(appointments.map((app) => app.time)))
+
+    console.log(`[v0] Booked times for ${date}:`, bookedTimes)
+
+    res.status(200).json({
+      success: true,
+      message: "Booked times retrieved successfully.",
+      data: bookedTimes,
+    })
+  } catch (error) {
+    console.error("Error fetching booked times:", error)
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve booked times due to a server error.",
+    })
+  }
+}
