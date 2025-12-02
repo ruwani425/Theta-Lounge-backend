@@ -9,11 +9,11 @@ const seedAdmin = async () => {
     if (userCount === 0) {
         const hashedPassword = await bcrypt.hash("admin123", 10);
         const admin = new userModel({
-        name: "ruwani",
-        email: "ruwaniranthika2001@gmail.com",
+        name: "savinda",
+        email: "thantrige32@gmail.com",
         password: hashedPassword,
         role: "admin",
-        firebaseUid: "admin-seeder",
+        firebaseUid: "admin-seeder-1",
         });
 
 

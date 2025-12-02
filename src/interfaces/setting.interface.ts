@@ -5,4 +5,7 @@ export interface SystemSettings {
   sessionsPerDay: number;
   openTime: string;
   closeTime: string;
+  numberOfTanks: number;
+  tankStaggerInterval: number;
+  actualCloseTime?: string;
 }

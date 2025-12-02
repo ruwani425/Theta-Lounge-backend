@@ -11,6 +11,9 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
       sessionsPerDay,
       openTime,
       closeTime,
+      numberOfTanks,
+      tankStaggerInterval,
+      actualCloseTime,
     } = req.body;
 
     // ✅ Validation
@@ -20,9 +23,11 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
       sessionDuration === undefined ||
       sessionsPerDay === undefined ||
       !openTime ||
-      !closeTime
+      !closeTime ||
+      numberOfTanks === undefined ||
+      tankStaggerInterval === undefined
     ) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All required fields must be provided" });
     }
 
     const settingsData = {
@@ -32,6 +37,9 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
       sessionsPerDay,
       openTime,
       closeTime,
+      numberOfTanks,
+      tankStaggerInterval,
+      actualCloseTime,
     };
 
     // ✅ Allow ONLY one settings row

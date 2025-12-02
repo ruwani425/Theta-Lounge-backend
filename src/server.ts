@@ -2,8 +2,6 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import app from "./app";
 import seedAdmin from "./script/seedAdmin";
-import bcrypt from "bcryptjs";
-import userModel from "./models/user.model";
 
 dotenv.config();
 
