@@ -262,33 +262,33 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
     }
 };
 
-export const getAppointmentDetails = async (req: Request, res: Response) => {
-    const { startDate, endDate } = req.query;
+// export const getAppointmentDetails = async (req: Request, res: Response) => {
+//     const { startDate, endDate } = req.query;
 
-    try {
-        const filter: any = {};
+//     try {
+//         const filter: any = {};
         
-        if (startDate && endDate) {
-            filter.date = { $gte: startDate as string, $lte: endDate as string };
-        }
+//         if (startDate && endDate) {
+//             filter.date = { $gte: startDate as string, $lte: endDate as string };
+//         }
         
-        const appointments = await AppointmentModel.find(filter).lean(); 
+//         const appointments = await AppointmentModel.find(filter).lean(); 
 
-        const responseAppointments = appointments.map(app => ({
-            ...app,
-            status: app.status.toLowerCase(),
-        }));
+//         const responseAppointments = appointments.map(app => ({
+//             ...app,
+//             status: app.status.toLowerCase(),
+//         }));
 
-        res.status(200).json({
-            success: true,
-            message: 'Appointment details retrieved successfully.',
-            data: responseAppointments, 
-        });
-    } catch (error) {
-        console.error('Error fetching appointment details:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve appointment details due to a server error.' });
-    }
-};
+//         res.status(200).json({
+//             success: true,
+//             message: 'Appointment details retrieved successfully.',
+//             data: responseAppointments, 
+//         });
+//     } catch (error) {
+//         console.error('Error fetching appointment details:', error);
+//         res.status(500).json({ success: false, message: 'Failed to retrieve appointment details due to a server error.' });
+//     }
+// };
 
 
 /**
@@ -331,5 +331,53 @@ export const getBookedTimesByDate = async (req: Request, res: Response) => {
       success: false,
       message: "Failed to retrieve booked times due to a server error.",
     })
+  }
+}
+
+
+export const getAppointmentDetails = async (req: Request, res: Response) => {
+  const { startDate, endDate, page = 1, limit = 20 } = req.query
+
+  try {
+    const pageNum = Math.max(1, Number.parseInt(page as string) || 1)
+    const limitNum = Math.max(1, Number.parseInt(limit as string) || 20)
+    const skip = (pageNum - 1) * limitNum
+
+    const filter: any = {}
+
+    if (startDate && endDate) {
+      filter.date = { $gte: startDate as string, $lte: endDate as string }
+    }
+
+    const appointments = await AppointmentModel.find(filter)
+      .sort({ date: -1, time: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean()
+
+    const totalCount = await AppointmentModel.countDocuments(filter)
+    const totalPages = Math.ceil(totalCount / limitNum)
+
+    const responseAppointments = appointments.map((app) => ({
+      ...app,
+      status: app.status.toLowerCase(),
+    }))
+
+    res.status(200).json({
+      success: true,
+      message: "Appointment details retrieved successfully.",
+      data: responseAppointments,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalRecords: totalCount,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+    })
+  } catch (error) {
+    console.error("Error fetching appointment details:", error)
+    res.status(500).json({ success: false, message: "Failed to retrieve appointment details due to a server error." })
   }
 }

@@ -1,26 +1,30 @@
-// src/interfaces/IAppointment.ts
-
-import { Document } from 'mongoose';
-
+import type { Document } from "mongoose"
 
 export interface IAppointment extends Document {
-    name: string;
-    date: string;         
-    time: string;         
-    email: string;       
-    contactNumber: string; 
-    specialNote?: string; 
-    status: 'pending' | 'cancelled' | 'completed'; 
-    createdAt: Date;
-    updatedAt: Date;
+  name: string
+  date: string
+  time: string
+  email: string
+  contactNumber: string
+  specialNote?: string
+  status: "pending" | "cancelled" | "completed"
+  createdAt: Date
+  updatedAt: Date
 }
-
 
 export interface AppointmentCount {
-    _id: {
-        date: string;
-        status: 'pending' | 'cancelled' | 'completed';
-    };
-    count: number;
+  _id: {
+    date: string
+    status: "pending" | "cancelled" | "completed"
+  }
+  count: number
 }
 
+export interface PaginationMeta {
+  currentPage: number
+  totalPages: number
+  totalRecords: number
+  limit: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
