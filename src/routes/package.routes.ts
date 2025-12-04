@@ -1,17 +1,20 @@
-// src/routes/Package.router.ts
+import { Router } from "express"
+import { createPackage, updatePackage, getAllPackages, getActivePackages } from "../controllers/package.controller"
 
-import { Router } from 'express';
-import { createPackage, updatePackage, getAllPackages } from '../controllers/package.controller';
+const router: Router = Router()
 
-const router: Router = Router();
+// Route for Client/Public Pages (Only Active packages)
+// GET /api/packages/active?page=1&limit=4&duration=12-Month
+router.get("/active", getActivePackages)
 
-// Route to get all packages (Active and Inactive) for Admin Dashboard
-router.get('/all', getAllPackages); 
+// Route for Admin Dashboard (All packages)
+// GET /api/packages/all?page=1&limit=4&duration=12-Month
+router.get("/all", getAllPackages)
 
 // Route to create a new package
-router.post('/', createPackage);
+router.post("/", createPackage)
 
-// Route to update a package by ID (used for editing details AND toggling isActive)
-router.put('/:id', updatePackage);
+// Route to update a package by ID
+router.put("/:id", updatePackage)
 
-export default router;
+export default router
