@@ -6,7 +6,7 @@ export interface Package {
   pricePerSlot: number
   totalPrice: number
   discount: number
-  isGenesisEligible: boolean
+  isGenesisEligible?: boolean
   isActive: boolean
   createdAt?: Date
   updatedAt?: Date
