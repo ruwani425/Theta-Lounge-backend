@@ -6,6 +6,7 @@ import tankRoutes from "./routes/tank.routes";
 import calendarRoutes from "./routes/calendar.routes"
 import appointmentRoutes from "./routes/appointment.routes"
 import packageRoutes from "./routes/package.routes"
+import packageActivationRoutes from "./routes/package-activation.routes";
 
 const app = express();
 
@@ -22,5 +23,5 @@ app.use("/api/tanks", tankRoutes);
 app.use("/api/calendar", calendarRoutes)
 app.use("/api/appointments", appointmentRoutes)
 app.use("/api/packages", packageRoutes)
-
+app.use("/api/package-activations", packageActivationRoutes)
 export default app;

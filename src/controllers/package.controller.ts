@@ -1,5 +1,3 @@
-// src/controllers/Package.controller.ts
-
 import { Request, Response } from 'express';
 import PackageModel from '../models/package.model';
 import { Package } from '../interfaces/package.interface';
@@ -109,97 +107,95 @@ export const updatePackage = async (req: Request, res: Response): Promise<void> 
     }
 };
 
-// export const getActivePackages = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//         const packages = await PackageModel.find({ isActive: true }).sort({ sessions: 1 });
-//         res.status(200).json({ data: packages });
-//     } catch (error) {
-//         console.error('Error retrieving active packages:', error);
-//         res.status(500).json({ message: 'Failed to retrieve active packages.' });
-//     }
-// };
+export const getPackageById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const packageId = req.params.id;
 
-// export const getAllPackages = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//         const packages = await PackageModel.find().sort({ sessions: 1 });
-//         res.status(200).json({ data: packages });
-//     } catch (error) {
-//         console.error('Error retrieving all packages:', error);
-//         res.status(500).json({ message: 'Failed to retrieve packages.' });
-//     }
-// };
+        const packageDoc = await PackageModel.findById(packageId);
 
+        if (!packageDoc) {
+            res.status(404).json({ message: 'Package not found.' });
+            return;
+        }
+
+        res.status(200).json({ data: packageDoc });
+
+    } catch (error) {
+        console.error('Error retrieving package by ID:', error);
+        res.status(500).json({ message: 'Failed to retrieve package.' });
+    }
+};
 
 export const getActivePackages = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const page = Number.parseInt(req.query.page as string) || 1
-    const limit = Number.parseInt(req.query.limit as string) || 4
-    const duration = req.query.duration as string
+    try {
+        const page = Number.parseInt(req.query.page as string) || 1
+        const limit = Number.parseInt(req.query.limit as string) || 4
+        const duration = req.query.duration as string
 
-    const skip = (page - 1) * limit
+        const skip = (page - 1) * limit
 
-    // Build query filter
-    const filter: any = { isActive: true }
-    if (duration) {
-      filter.duration = duration
+        // Build query filter
+        const filter: any = { isActive: true }
+        if (duration) {
+            filter.duration = duration
+        }
+
+        // Get paginated packages
+        const packages = await PackageModel.find(filter).sort({ sessions: 1 }).skip(skip).limit(limit)
+
+        // Get total count for pagination info
+        const total = await PackageModel.countDocuments(filter)
+
+        res.status(200).json({
+            data: packages,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1,
+            },
+        })
+    } catch (error) {
+        console.error("Error retrieving active packages:", error)
+        res.status(500).json({ message: "Failed to retrieve active packages." })
     }
-
-    // Get paginated packages
-    const packages = await PackageModel.find(filter).sort({ sessions: 1 }).skip(skip).limit(limit)
-
-    // Get total count for pagination info
-    const total = await PackageModel.countDocuments(filter)
-
-    res.status(200).json({
-      data: packages,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    })
-  } catch (error) {
-    console.error("Error retrieving active packages:", error)
-    res.status(500).json({ message: "Failed to retrieve active packages." })
-  }
 }
 
 export const getAllPackages = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const page = Number.parseInt(req.query.page as string) || 1
-    const limit = Number.parseInt(req.query.limit as string) || 4
-    const duration = req.query.duration as string
+    try {
+        const page = Number.parseInt(req.query.page as string) || 1
+        const limit = Number.parseInt(req.query.limit as string) || 4
+        const duration = req.query.duration as string
 
-    const skip = (page - 1) * limit
+        const skip = (page - 1) * limit
 
-    // Build query filter
-    const filter: any = {}
-    if (duration) {
-      filter.duration = duration
+        // Build query filter
+        const filter: any = {}
+        if (duration) {
+            filter.duration = duration
+        }
+
+        // Get paginated packages
+        const packages = await PackageModel.find(filter).sort({ sessions: 1 }).skip(skip).limit(limit)
+
+        // Get total count for pagination info
+        const total = await PackageModel.countDocuments(filter)
+
+        res.status(200).json({
+            data: packages,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1,
+            },
+        })
+    } catch (error) {
+        console.error("Error retrieving all packages:", error)
+        res.status(500).json({ message: "Failed to retrieve packages." })
     }
-
-    // Get paginated packages
-    const packages = await PackageModel.find(filter).sort({ sessions: 1 }).skip(skip).limit(limit)
-
-    // Get total count for pagination info
-    const total = await PackageModel.countDocuments(filter)
-
-    res.status(200).json({
-      data: packages,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    })
-  } catch (error) {
-    console.error("Error retrieving all packages:", error)
-    res.status(500).json({ message: "Failed to retrieve packages." })
-  }
 }

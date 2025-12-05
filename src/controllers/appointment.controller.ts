@@ -3,7 +3,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import AppointmentModel from '../models/appointment.model';
-import CalendarDetailModel from '../models/calendar-detail.model';
+import CalendarDetailModel from '../models/calendar.detail.model';
 import { AppointmentCount, IAppointment } from '../interfaces/appointment.interface';
 import { ICalendarDetail } from '../interfaces/calendar.interface';
 
@@ -19,14 +19,14 @@ const timeToMinutes = (time: string): number => {
 };
 
 const calculateStaggeredSessions = (
-    openTime: string, closeTime: string, duration: number, buffer: number, 
+    openTime: string, closeTime: string, duration: number, buffer: number,
     numberOfTanks: number, staggerInterval: number,
 ): {
     sessionsPerTank: number;
     actualCloseTime: string;
     totalSessions: number;
 } => {
-    const durationNum = Number(duration); 
+    const durationNum = Number(duration);
     const bufferNum = Number(buffer);
 
     if (!openTime || !closeTime || durationNum <= 0 || bufferNum < 0 || numberOfTanks <= 0) {
@@ -40,7 +40,7 @@ const calculateStaggeredSessions = (
     const sessionLength = durationNum + bufferNum;
 
     let maxSessionsPerTank = 0;
-    let latestEndTime = openMinutes; 
+    let latestEndTime = openMinutes;
 
     for (let tankIndex = 0; tankIndex < numberOfTanks; tankIndex++) {
         const tankStartMinutes = openMinutes + tankIndex * Number(staggerInterval || 0);
@@ -65,23 +65,23 @@ const calculateStaggeredSessions = (
 
 
 export const createAppointment = async (req: Request, res: Response) => {
-    const { 
+    const {
         name, date, time, email, contactNumber, specialNote,
-        calendarContext 
+        calendarContext
     } = req.body;
 
     if (!date || !time || !email || !contactNumber || !name || !calendarContext) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Missing required fields: name, date, time, email, contactNumber, and calendar context are mandatory.' 
+        return res.status(400).json({
+            success: false,
+            message: 'Missing required fields: name, date, time, email, contactNumber, and calendar context are mandatory.'
         });
     }
 
     const newAppointmentData: Partial<IAppointment> = {
         name, date, time, email, contactNumber, specialNote, status: 'pending',
     };
-    
-    const { 
+
+    const {
         defaultSystemSettings,
     } = calendarContext;
 
@@ -94,14 +94,14 @@ export const createAppointment = async (req: Request, res: Response) => {
         let isNewCalendarRecord = false;
 
         calendarRecord = await CalendarDetailModel.findOne({ date: date }).session(session);
-        
+
         if (calendarRecord) {
             finalSessionsToSell = calendarRecord.sessionsToSell;
-            
+
         } else {
             isNewCalendarRecord = true;
             const settings = defaultSystemSettings;
-            
+
             const totalSessions = calculateStaggeredSessions(
                 settings.openTime,
                 settings.closeTime,
@@ -152,21 +152,21 @@ export const createAppointment = async (req: Request, res: Response) => {
             message: 'Appointment successfully created and calendar updated.',
             data: responseAppointment,
         });
-        
+
     } catch (error: any) {
         await session.abortTransaction();
         session.endSession();
-        
+
         console.error('Error creating appointment:', error);
-        
+
         let errorMessage = 'Failed to create appointment due to a server error.';
         if (error.message.includes('Sold Out')) {
-             errorMessage = error.message; 
+            errorMessage = error.message;
         }
-        
-        res.status(500).json({ 
-            success: false, 
-            message: errorMessage 
+
+        res.status(500).json({
+            success: false,
+            message: errorMessage
         });
     }
 };
@@ -174,7 +174,7 @@ export const createAppointment = async (req: Request, res: Response) => {
 export const updateAppointmentStatus = async (req: Request, res: Response) => {
     try {
         const appointmentId = req.params.id;
-        const { status: uiStatus } = req.body; 
+        const { status: uiStatus } = req.body;
 
         const updatedAppointment = await AppointmentModel.findByIdAndUpdate(
             appointmentId,
@@ -188,7 +188,7 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
 
         const responseAppointment = {
             ...updatedAppointment.toObject(),
-            status: updatedAppointment.status.toLowerCase(), 
+            status: updatedAppointment.status.toLowerCase(),
         };
 
         res.status(200).json({
@@ -215,9 +215,9 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
     if (!startDate || !endDate) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Missing required query parameters: startDate and endDate.' 
+        return res.status(400).json({
+            success: false,
+            message: 'Missing required query parameters: startDate and endDate.'
         });
     }
 
@@ -227,7 +227,7 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
                 $match: {
                     date: { $gte: startDate as string, $lte: endDate as string },
                     // FIX: Include 'pending' AND 'completed' appointments to calculate total booked sessions (excluding 'canceled').
-                    status: { $in: ['pending', 'completed'] } 
+                    status: { $in: ['pending', 'completed'] }
                 }
             },
             {
@@ -239,15 +239,15 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
         ]);
 
         const totalBookedSessionsByDate: Record<string, number> = {};
-        
+
         counts.forEach(item => {
             const dateKey = item._id.date;
             totalBookedSessionsByDate[dateKey] = (totalBookedSessionsByDate[dateKey] || 0) + item.count;
         });
-        
+
         const bookedSessionsArray = Object.keys(totalBookedSessionsByDate).map(date => ({
             date: date,
-            count: totalBookedSessionsByDate[date] 
+            count: totalBookedSessionsByDate[date]
         }));
 
 
@@ -267,11 +267,11 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
 
 //     try {
 //         const filter: any = {};
-        
+
 //         if (startDate && endDate) {
 //             filter.date = { $gte: startDate as string, $lte: endDate as string };
 //         }
-        
+
 //         const appointments = await AppointmentModel.find(filter).lean(); 
 
 //         const responseAppointments = appointments.map(app => ({
@@ -297,87 +297,87 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
  * Returns array of booked times (HH:MM format) for that date
  */
 export const getBookedTimesByDate = async (req: Request, res: Response) => {
-  const { date } = req.params
+    const { date } = req.params
 
-  if (!date) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing required parameter: date.",
-    })
-  }
+    if (!date) {
+        return res.status(400).json({
+            success: false,
+            message: "Missing required parameter: date.",
+        })
+    }
 
-  try {
-    // Fetch all pending and completed appointments for the specific date
-    const appointments = await AppointmentModel.find({
-      date: date,
-      status: { $in: ["pending", "completed"] },
-    })
-      .select("time")
-      .lean()
+    try {
+        // Fetch all pending and completed appointments for the specific date
+        const appointments = await AppointmentModel.find({
+            date: date,
+            status: { $in: ["pending", "completed"] },
+        })
+            .select("time")
+            .lean()
 
-    // Extract and deduplicate booked times
-    const bookedTimes = Array.from(new Set(appointments.map((app) => app.time)))
+        // Extract and deduplicate booked times
+        const bookedTimes = Array.from(new Set(appointments.map((app) => app.time)))
 
-    console.log(`[v0] Booked times for ${date}:`, bookedTimes)
+        console.log(`[v0] Booked times for ${date}:`, bookedTimes)
 
-    res.status(200).json({
-      success: true,
-      message: "Booked times retrieved successfully.",
-      data: bookedTimes,
-    })
-  } catch (error) {
-    console.error("Error fetching booked times:", error)
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve booked times due to a server error.",
-    })
-  }
+        res.status(200).json({
+            success: true,
+            message: "Booked times retrieved successfully.",
+            data: bookedTimes,
+        })
+    } catch (error) {
+        console.error("Error fetching booked times:", error)
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve booked times due to a server error.",
+        })
+    }
 }
 
 
 export const getAppointmentDetails = async (req: Request, res: Response) => {
-  const { startDate, endDate, page = 1, limit = 20 } = req.query
+    const { startDate, endDate, page = 1, limit = 20 } = req.query
 
-  try {
-    const pageNum = Math.max(1, Number.parseInt(page as string) || 1)
-    const limitNum = Math.max(1, Number.parseInt(limit as string) || 20)
-    const skip = (pageNum - 1) * limitNum
+    try {
+        const pageNum = Math.max(1, Number.parseInt(page as string) || 1)
+        const limitNum = Math.max(1, Number.parseInt(limit as string) || 20)
+        const skip = (pageNum - 1) * limitNum
 
-    const filter: any = {}
+        const filter: any = {}
 
-    if (startDate && endDate) {
-      filter.date = { $gte: startDate as string, $lte: endDate as string }
+        if (startDate && endDate) {
+            filter.date = { $gte: startDate as string, $lte: endDate as string }
+        }
+
+        const appointments = await AppointmentModel.find(filter)
+            .sort({ date: -1, time: -1 })
+            .skip(skip)
+            .limit(limitNum)
+            .lean()
+
+        const totalCount = await AppointmentModel.countDocuments(filter)
+        const totalPages = Math.ceil(totalCount / limitNum)
+
+        const responseAppointments = appointments.map((app) => ({
+            ...app,
+            status: app.status.toLowerCase(),
+        }))
+
+        res.status(200).json({
+            success: true,
+            message: "Appointment details retrieved successfully.",
+            data: responseAppointments,
+            pagination: {
+                currentPage: pageNum,
+                totalPages,
+                totalRecords: totalCount,
+                limit: limitNum,
+                hasNextPage: pageNum < totalPages,
+                hasPrevPage: pageNum > 1,
+            },
+        })
+    } catch (error) {
+        console.error("Error fetching appointment details:", error)
+        res.status(500).json({ success: false, message: "Failed to retrieve appointment details due to a server error." })
     }
-
-    const appointments = await AppointmentModel.find(filter)
-      .sort({ date: -1, time: -1 })
-      .skip(skip)
-      .limit(limitNum)
-      .lean()
-
-    const totalCount = await AppointmentModel.countDocuments(filter)
-    const totalPages = Math.ceil(totalCount / limitNum)
-
-    const responseAppointments = appointments.map((app) => ({
-      ...app,
-      status: app.status.toLowerCase(),
-    }))
-
-    res.status(200).json({
-      success: true,
-      message: "Appointment details retrieved successfully.",
-      data: responseAppointments,
-      pagination: {
-        currentPage: pageNum,
-        totalPages,
-        totalRecords: totalCount,
-        limit: limitNum,
-        hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1,
-      },
-    })
-  } catch (error) {
-    console.error("Error fetching appointment details:", error)
-    res.status(500).json({ success: false, message: "Failed to retrieve appointment details due to a server error." })
-  }
 }
