@@ -1,6 +1,7 @@
 import type { Document } from "mongoose"
 
 export interface IAppointment extends Document {
+  reservationId: string
   name: string
   date: string
   time: string

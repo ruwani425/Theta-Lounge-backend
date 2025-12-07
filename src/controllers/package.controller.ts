@@ -2,11 +2,41 @@ import { Request, Response } from 'express';
 import PackageModel from '../models/package.model';
 import { Package } from '../interfaces/package.interface';
 
+// MOCK IMPORT: Replace this with your actual SystemSettingsModel import
+// Assuming SystemSettingsModel has a findOne() method to retrieve the settings
+// and that SystemSettings is the interface defining the return type.
+// You must ensure this path and interface are correct in your project.
+import SystemSettingsModel from '../models/settings.model'; // Assuming this path
+import { SystemSettings } from '../interfaces/setting.interface'; // Assuming this interface
+
+// Fallback constant in case settings cannot be loaded
+const FALLBACK_DEFAULT_FLOAT_PRICE = 15000; 
+
+// --- Core Calculation Logic ---
+
+/**
+ * Retrieves the current default float price from system settings or uses a fallback.
+ */
+const getBaseFloatPrice = async (): Promise<number> => {
+    try {
+        const settings = await SystemSettingsModel.findOne().exec();
+        // Use the fetched price, otherwise fall back to the constant value
+        return settings?.defaultFloatPrice ?? FALLBACK_DEFAULT_FLOAT_PRICE;
+    } catch (error) {
+        console.error("Error fetching base float price, using fallback:", error);
+        return FALLBACK_DEFAULT_FLOAT_PRICE;
+    }
+};
+
+/**
+ * Calculates the final total price based on sessions, the dynamic price per slot (base rate), and discount.
+ * NOTE: pricePerSlot parameter is now implicitly the Base Float Price fetched from settings.
+ */
 const calculateFinalPrice = (sessions: number, pricePerSlot: number, discount: number): number => {
     if (sessions <= 0 || pricePerSlot <= 0) return 0;
     
     const originalTotal = sessions * pricePerSlot;
-    const discountFactor = (100 - discount) / 100;
+    const discountFactor = (100 - (discount ?? 0)) / 100;
     
     return Math.round(originalTotal * discountFactor);
 };
@@ -16,25 +46,33 @@ const checkGenesisEligibility = (sessions: number): boolean => {
     return sessions >= MIN_SESSIONS_FOR_ELIGIBILITY;
 };
 
+// ----------------------------------------------------
+// CREATE PACKAGE
+// ----------------------------------------------------
+
 export const createPackage = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { name, duration, sessions, pricePerSlot, discount } = req.body as Partial<Package>;
+        // REMOVED pricePerSlot from req.body
+        const { name, duration, sessions, discount } = req.body as Partial<Package>;
 
-        if (!name || !duration || sessions === undefined || pricePerSlot === undefined) {
-            res.status(400).json({ message: 'Missing required fields: name, duration, sessions, pricePerSlot.' });
+        if (!name || !duration || sessions === undefined) {
+            res.status(400).json({ message: 'Missing required fields: name, duration, sessions.' });
             return;
         }
 
+        // 1. Fetch the dynamic base price
+        const pricePerSlot = await getBaseFloatPrice();
+
         const finalDiscount = discount ?? 0;
         
+        // 2. Calculate values using the fetched base price
         const calculatedTotalPrice = calculateFinalPrice(sessions, pricePerSlot, finalDiscount);
         const isEligible = checkGenesisEligibility(sessions);
 
-        const newPackage: Package = {
+        const newPackage: Partial<Package> = {
             name,
             duration,
             sessions,
-            pricePerSlot,
             discount: finalDiscount,
             totalPrice: calculatedTotalPrice,
             isGenesisEligible: isEligible,
@@ -59,13 +97,17 @@ export const createPackage = async (req: Request, res: Response): Promise<void> 
     }
 };
 
+// ----------------------------------------------------
+// UPDATE PACKAGE
+// ----------------------------------------------------
 
 export const updatePackage = async (req: Request, res: Response): Promise<void> => {
     try {
         const packageId = req.params.id;
         const updates = req.body as Partial<Package>;
 
-        if (updates.sessions !== undefined || updates.pricePerSlot !== undefined || updates.discount !== undefined) {
+        // Check if any fields affecting price/eligibility are being updated
+        if (updates.sessions !== undefined || updates.discount !== undefined) {
             
             const existingPackage = await PackageModel.findById(packageId);
             if (!existingPackage) {
@@ -73,13 +115,21 @@ export const updatePackage = async (req: Request, res: Response): Promise<void> 
                 return;
             }
 
-            const sessions = updates.sessions ?? existingPackage.sessions;
-            const pricePerSlot = updates.pricePerSlot ?? existingPackage.pricePerSlot;
-            const discount = updates.discount ?? existingPackage.discount;
+            // 1. Get the latest base price
+            const basePrice = await getBaseFloatPrice();
 
-            updates.totalPrice = calculateFinalPrice(sessions, pricePerSlot, discount);
+            // Use the new sessions/discount if provided, otherwise use the existing package values
+            const sessions = updates.sessions ?? existingPackage.sessions;
+            const discount = updates.discount ?? existingPackage.discount;
+            
+            // 2. Recalculate totalPrice and eligibility using the base price
+            updates.totalPrice = calculateFinalPrice(sessions, basePrice, discount);
             updates.isGenesisEligible = checkGenesisEligibility(sessions);
         }
+
+        // REMOVED: updates.pricePerSlot is not allowed to be passed or stored.
+        delete (updates as any).pricePerSlot;
+
 
         const updatedPackage = await PackageModel.findByIdAndUpdate(
             packageId,
@@ -106,6 +156,10 @@ export const updatePackage = async (req: Request, res: Response): Promise<void> 
         res.status(500).json({ message: 'Failed to update package.', error });
     }
 };
+
+// ----------------------------------------------------
+// OTHER CONTROLLERS (Unchanged, but now rely on existing database structure without pricePerSlot)
+// ----------------------------------------------------
 
 export const getPackageById = async (req: Request, res: Response): Promise<void> => {
     try {

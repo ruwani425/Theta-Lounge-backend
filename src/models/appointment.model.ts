@@ -32,6 +32,12 @@ const AppointmentSchema: Schema<IAppointment> = new Schema(
       type: String,
       required: false,
     },
+    reservationId: {
+        type: String,
+        unique: true,
+        required: true,
+        trim: true,
+    },
     status: {
       type: String,
       enum: ["pending", "cancelled", "completed"],

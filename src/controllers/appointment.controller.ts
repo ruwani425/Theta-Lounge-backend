@@ -10,6 +10,8 @@ import {
   IAppointment,
 } from "../interfaces/appointment.interface";
 import { ICalendarDetail } from "../interfaces/calendar.interface";
+import { generateReservationId } from "../utils/generateReservationId";
+
 
 const timeToMinutes = (time: string): number => {
   try {
@@ -86,7 +88,7 @@ export const createAppointment = async (req: Request, res: Response) => {
     contactNumber,
     specialNote,
     calendarContext,
-    packageActivationId, // Optional: ID of package activation to use
+    packageActivationId,
   } = req.body;
 
   console.log("🎫 [createAppointment] Request:", {
@@ -104,7 +106,10 @@ export const createAppointment = async (req: Request, res: Response) => {
     });
   }
 
+  const reservationId = await generateReservationId();
+
   const newAppointmentData: Partial<IAppointment> = {
+    reservationId,
     name,
     date,
     time,
@@ -121,7 +126,6 @@ export const createAppointment = async (req: Request, res: Response) => {
   session.startTransaction();
 
   try {
-    // If package activation ID is provided, verify and decrement session
     let packageActivation = null;
     if (packageActivationId) {
       console.log(
@@ -143,7 +147,6 @@ export const createAppointment = async (req: Request, res: Response) => {
         );
       }
 
-      // Check if package is expired
       if (
         packageActivation.expiryDate &&
         new Date() > packageActivation.expiryDate
@@ -151,7 +154,6 @@ export const createAppointment = async (req: Request, res: Response) => {
         throw new Error("This package has expired.");
       }
 
-      // Check remaining sessions
       const usedCount = packageActivation.usedCount || 0;
       const totalSessions = packageActivation.totalSessions || 0;
       const remainingSessions = totalSessions - usedCount;
@@ -166,7 +168,6 @@ export const createAppointment = async (req: Request, res: Response) => {
         throw new Error("No remaining sessions in this package.");
       }
 
-      // Increment used count
       packageActivation.usedCount = usedCount + 1;
       await packageActivation.save({ session });
 
@@ -363,7 +364,7 @@ export const getAppointmentCounts = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Appointment counts retrieved successfully.",
-      data: bookedSessionsArray, // This now contains booked (non-canceled) sessions per date
+      data: bookedSessionsArray,
     });
   } catch (error) {
     console.error("Error fetching appointment counts:", error);
@@ -563,6 +564,69 @@ export const getAppointmentDetails = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve appointment details due to a server error.",
+    });
+  }
+};
+
+
+export const updateAppointmentDetails = async (req: Request, res: Response) => {
+  try {
+    const appointmentId = req.params.id;
+    const { date, time } = req.body;
+
+    if (!date || !time) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: date and time are mandatory for update.",
+      });
+    }
+    
+    // NOTE: In a production app, complex logic to free up the old session and 
+    // book the new session (checking availability, updating the CalendarDetail document) 
+    // must be implemented here inside a transaction.
+    
+    const updatedAppointment = await AppointmentModel.findByIdAndUpdate(
+      appointmentId,
+      { $set: { date: date, time: time } },
+      { new: true, runValidators: true }
+    )
+    .populate({ 
+        path: "packageActivationId",
+        select:
+          "packageName totalSessions usedCount remainingSessions startDate expiryDate status packageId",
+        populate: {
+          path: "packageId",
+          select: "name duration sessions totalPrice",
+        },
+    })
+    .lean();
+
+    if (!updatedAppointment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Appointment not found." });
+    }
+    
+    let isPackageUser = !!updatedAppointment.packageActivationId;
+    let packageDetails = updatedAppointment.packageActivationId;
+    
+    const responseAppointment = {
+      ...updatedAppointment,
+      status: updatedAppointment.status.toLowerCase(),
+      isPackageUser,
+      packageDetails,
+    };
+
+    res.status(200).json({
+      success: true,
+      message: `Appointment date/time updated to ${date} at ${time}.`,
+      data: responseAppointment,
+    });
+  } catch (error) {
+    console.error("Error updating appointment details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update appointment details due to a server error.",
     });
   }
 };

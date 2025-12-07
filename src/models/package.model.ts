@@ -31,11 +31,6 @@ const PackageSchema: Schema<PackageDocument> = new Schema({
         required: [true, 'Total sessions is required'],
         min: [1, 'Sessions must be at least 1'],
     },
-    pricePerSlot: {
-        type: Number,
-        required: [true, 'Price per slot is required'],
-        min: [0, 'Price per slot cannot be negative'],
-    },
     totalPrice: {
         type: Number,
         required: [true, 'Total price is required'],

@@ -4,6 +4,7 @@ import {
   getAppointmentCounts,
   getAppointmentDetails,
   getBookedTimesByDate,
+  updateAppointmentDetails,
   updateAppointmentStatus,
 } from "../controllers/appointment.controller"
 
@@ -15,5 +16,6 @@ router.get("/counts", getAppointmentCounts)
 router.get("/", getAppointmentDetails)
 router.put("/:id/status", updateAppointmentStatus)
 router.get("/booked-times/:date", getBookedTimesByDate)
+router.put("/:id", updateAppointmentDetails)
 
 export default router
