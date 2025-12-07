@@ -22,10 +22,11 @@ export const googleAuth = async (req: Request, res: Response) => {
       });
     }
 
-    const token = generateToken(user._id.toString());
+    const token = generateToken(user._id.toString(), user.email, user.role);
 
     return res.status(200).json({
-      message: "Success",
+      success: true,
+      message: "Authentication successful",
       token,
       user: {
         _id: user._id,

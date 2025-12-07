@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.ts"
+    "start": "node dist/server.ts",
+    "clear:activations": "ts-node src/script/runClearActivations.ts"
   },
   "keywords": [],
   "author": "",

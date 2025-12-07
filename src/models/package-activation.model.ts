@@ -19,6 +19,13 @@ export interface PackageActivationDocument extends IPackageActivationBase, Docum
 }
 
 const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
+    // User Reference
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: false, // Optional for backward compatibility
+    },
+
     // User/Client Information
     fullName: {
         type: String,
@@ -66,6 +73,27 @@ const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
         enum: ['Pending', 'Contacted', 'Confirmed', 'Rejected'],
         default: 'Pending',
         required: true,
+    },
+
+    // Session Tracking
+    usedCount: {
+        type: Number,
+        default: 0,
+        min: [0, 'Used count cannot be negative'],
+    },
+    totalSessions: {
+        type: Number,
+        required: false, // Populated from package data
+    },
+
+    // Date Tracking
+    startDate: {
+        type: Date,
+        required: false, // Set when status becomes 'Confirmed'
+    },
+    expiryDate: {
+        type: Date,
+        required: false, // Calculated based on package duration
     },
 
 }, {

@@ -8,6 +8,7 @@ export interface IAppointment extends Document {
   contactNumber: string
   specialNote?: string
   status: "pending" | "cancelled" | "completed"
+  packageActivationId?: string
   createdAt: Date
   updatedAt: Date
 }

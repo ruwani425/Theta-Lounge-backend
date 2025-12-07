@@ -37,6 +37,11 @@ const AppointmentSchema: Schema<IAppointment> = new Schema(
       enum: ["pending", "cancelled", "completed"],
       default: "pending",
     },
+    packageActivationId: {
+      type: Schema.Types.ObjectId,
+      ref: "PackageActivation",
+      required: false,
+    },
   },
   {
     timestamps: true,

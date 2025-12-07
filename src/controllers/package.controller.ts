@@ -166,8 +166,10 @@ export const getActivePackages = async (req: Request, res: Response): Promise<vo
 export const getAllPackages = async (req: Request, res: Response): Promise<void> => {
     try {
         const page = Number.parseInt(req.query.page as string) || 1
-        const limit = Number.parseInt(req.query.limit as string) || 4
+        const limit = Number.parseInt(req.query.limit as string) || 10
         const duration = req.query.duration as string
+
+        console.log('📦 [getAllPackages] Request params:', { page, limit, duration });
 
         const skip = (page - 1) * limit
 
@@ -183,6 +185,14 @@ export const getAllPackages = async (req: Request, res: Response): Promise<void>
         // Get total count for pagination info
         const total = await PackageModel.countDocuments(filter)
 
+        console.log('✅ [getAllPackages] Retrieved packages:', { 
+            count: packages.length, 
+            total, 
+            page, 
+            limit,
+            packageNames: packages.map(p => p.name)
+        });
+
         res.status(200).json({
             data: packages,
             pagination: {
@@ -195,7 +205,7 @@ export const getAllPackages = async (req: Request, res: Response): Promise<void>
             },
         })
     } catch (error) {
-        console.error("Error retrieving all packages:", error)
+        console.error("❌ Error retrieving all packages:", error)
         res.status(500).json({ message: "Failed to retrieve packages." })
     }
 }
