@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import User from "../models/user.model";
 import { generateToken } from "../utils/jwt";
-
 export const googleAuth = async (req: Request, res: Response) => {
   try {
     const { name, email, profileImage, uid } = req.body;
@@ -10,7 +9,8 @@ export const googleAuth = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid Google data" });
     }
 
-    let user = await User.findOne({ email }).select("+role");
+    // Must select('+role') or ensure role is available on the returned model
+    let user = await User.findOne({ email }).select('+role'); 
 
     if (!user) {
       user = await User.create({
@@ -24,18 +24,21 @@ export const googleAuth = async (req: Request, res: Response) => {
 
     const token = generateToken(user._id.toString(), user.email, user.role);
 
-    return res.status(200).json({
-      success: true,
-      message: "Authentication successful",
-      token,
-      user: {
+    // FIX: Ensure the returned user object matches the AuthUser interface
+    const userResponse = {
         _id: user._id,
         name: user.name,
         email: user.email,
         profileImage: user.profileImage,
-        firebaseUid: user.firebaseUid,
         role: user.role,
-      },
+        // firebaseUid is excluded from client response for security/simplicity
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Authentication successful",
+      token,
+      user: userResponse, // <-- Send the user object here
     });
   } catch (error) {
     console.error("Google Auth Error:", error);

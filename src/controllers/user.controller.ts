@@ -1,7 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import UserModel from '../models/user.model';
 import PackageActivationModel from '../models/package-activation.model';
+import AppointmentModel from '../models/appointment.model';
 
 /**
  * Get all users (Admin only)
@@ -36,7 +37,7 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response) => {
         const { userId } = req.params;
 
         const user = await UserModel.findById(userId).select('-firebaseUid');
-        
+
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -82,8 +83,8 @@ export const getMyActivatedPackages = async (req: AuthenticatedRequest, res: Res
         }
 
         // Get all package activations for current user
-        const packageActivations = await PackageActivationModel.find({ 
-            email: userEmail 
+        const packageActivations = await PackageActivationModel.find({
+            email: userEmail
         })
             .populate('packageId')
             .sort({ createdAt: -1 });
@@ -119,7 +120,7 @@ export const getMyProfile = async (req: AuthenticatedRequest, res: Response) => 
         }
 
         const user = await UserModel.findById(userId).select('-firebaseUid');
-        
+
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -185,3 +186,71 @@ export const updateUserRole = async (req: AuthenticatedRequest, res: Response) =
     }
 };
 
+// Required addition to src/controllers/user.controller.ts
+
+/**
+ * GET /api/users/dashboard/:email
+ * Aggregates client data: profile, all reservations, and all package activations. (Admin only)
+ */
+export const getClientDashboardDetails = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.params;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Missing client email.' });
+        }
+
+        // 1. Fetch User Profile
+        const user = await UserModel.findOne({ email }).select('-firebaseUid -__v');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Client not found.' });
+        }
+
+        // 2. Fetch All Reservations for this client
+        const clientReservations = await AppointmentModel.find({ email })
+            .select('reservationId date time status specialNote isPackageUser')
+            .sort({ date: -1, time: -1 })
+            .lean();
+
+        // 3. Fetch All Package Activations (Confirmed and Unconfirmed)
+        const packageActivations = await PackageActivationModel.find({ email })
+            .populate('packageId', 'name duration sessions totalPrice')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // 4. Calculate Active/Remaining sessions and filter active
+        const now = new Date();
+        const packagesSummary = packageActivations.map(activation => {
+            const totalSessions = activation.totalSessions || 0;
+            const usedCount = activation.usedCount || 0;
+            const remainingSessions = Math.max(0, totalSessions - usedCount);
+
+            const isActive = activation.status === 'Confirmed' && (!activation.expiryDate || activation.expiryDate > now);
+
+            return {
+                ...activation,
+                remainingSessions,
+                isActive,
+            };
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Client dashboard data retrieved successfully',
+            data: {
+                profile: user,
+                reservations: clientReservations,
+                packages: packagesSummary,
+                activePackagesCount: packagesSummary.filter(p => p.isActive).length,
+                totalReservations: clientReservations.length,
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching client dashboard:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch client dashboard data.',
+        });
+    }
+};

@@ -5,6 +5,7 @@ import {
     getMyActivatedPackages,
     getMyProfile,
     updateUserRole,
+    getClientDashboardDetails,
 } from '../controllers/user.controller';
 import { authenticateToken, requireAdmin } from '../middlewares/auth.middleware';
 
@@ -26,6 +27,8 @@ router.get('/:userId', authenticateToken, requireAdmin, getUserById);
 
 // Update user role
 router.patch('/:userId/role', authenticateToken, requireAdmin, updateUserRole);
+
+router.get('/dashboard/:email', authenticateToken, requireAdmin, getClientDashboardDetails);
 
 export default router;
 
