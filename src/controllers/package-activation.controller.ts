@@ -177,9 +177,10 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
 export const updatePackageActivationStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        // 🛑 MODIFIED: Destructure status and the optional startDate from the body
+        const { status, startDate: requestedStartDate } = req.body;
 
-        console.log('📝 [updatePackageActivationStatus] Updating status:', { id, status });
+        console.log('📝 [updatePackageActivationStatus] Updating status:', { id, status, requestedStartDate });
 
         if (!status || !['Pending', 'Contacted', 'Confirmed', 'Rejected'].includes(status)) {
             res.status(400).json({ message: 'Invalid status value.' });
@@ -199,15 +200,26 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
             return;
         }
 
+        // Apply new status
         activation.status = status;
 
-        // If confirming, set start date and calculate expiry date
-        if (status === 'Confirmed' && !activation.startDate) {
-            activation.startDate = new Date();
+        // 🛑 MODIFIED LOGIC START
+        // Condition 1: If the status is Confirmed AND (it's the first time confirming OR a new start date is provided)
+        const isConfirmedOrDateUpdate = status === 'Confirmed' && (!activation.startDate || requestedStartDate);
+
+        if (isConfirmedOrDateUpdate) {
             
-            // Calculate expiry date based on package duration
-            const expiryDate = new Date();
+            // Determine the actual start date to use. Use requested date if provided, otherwise use current date/time.
+            // If the activation was already confirmed, and requestedStartDate is undefined, this block is skipped due to the outer check.
+            const actualStartDate = requestedStartDate ? new Date(requestedStartDate) : new Date();
+
+            // 1. Update the start date
+            activation.startDate = actualStartDate;
+            
+            // 2. Recalculate expiry date based on the new actualStartDate
+            const expiryDate = new Date(actualStartDate); 
             const durationMatch = pkg.duration.match(/(\d+)-Month/);
+            
             if (durationMatch) {
                 const months = parseInt(durationMatch[1]);
                 expiryDate.setMonth(expiryDate.getMonth() + months);
@@ -217,12 +229,13 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
             }
             activation.expiryDate = expiryDate;
 
-            console.log('✅ [updatePackageActivationStatus] Set dates:', {
+            console.log('✅ [updatePackageActivationStatus] Dates updated:', {
                 startDate: activation.startDate,
                 expiryDate: activation.expiryDate,
                 duration: pkg.duration,
             });
         }
+        // 🛑 MODIFIED LOGIC END
 
         await activation.save();
 
