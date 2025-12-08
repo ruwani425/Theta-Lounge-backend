@@ -2,40 +2,33 @@
 
 import { Request, Response } from 'express';
 import PackageActivationModel from '../models/package-activation.model';
-import PackageModel from '../models/package.model'; // To fetch package name
+import PackageModel from '../models/package.model'; 
 import { PackageActivation } from '../interfaces/package-activation.interface';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import cron from 'node-cron'; 
 
-// Helper interface based on the frontend payload
 interface PackageActivationPayload extends Omit<PackageActivation, '_id' | 'packageName' | 'status' | 'createdAt' | 'updatedAt' | 'preferredDate'> {
-    preferredDate: string; // The date comes as a string from the frontend (new Date().toISOString())
+    preferredDate: string; 
 }
 
-
-/**
- * POST /api/package-activations
- * Creates a new package activation request from the client form.
- */
 export const createPackageActivation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const payload = req.body as PackageActivationPayload;
         const { fullName, email, phone, address, message, preferredDate, packageId } = payload;
-        const userId = req.userId; // From JWT token (optional for guests)
+        const userId = req.userId;
 
-        console.log('📦 [createPackageActivation] Request:', { 
+        console.log(' [createPackageActivation] Request:', { 
             fullName, 
             email, 
             packageId, 
             userId 
         });
 
-        // 1. Basic Validation
         if (!fullName || !email || !phone || !address || !packageId) {
             res.status(400).json({ message: 'Missing required fields: fullName, email, phone, address, packageId.' });
             return;
         }
 
-        // 2. Fetch Package Details (for name, sessions, and validation)
         const pkg = await PackageModel.findById(packageId).select('name sessions duration');
         
         if (!pkg) {
@@ -43,13 +36,12 @@ export const createPackageActivation = async (req: AuthenticatedRequest, res: Re
             return;
         }
 
-        console.log('✅ [createPackageActivation] Package found:', { 
+        console.log(' [createPackageActivation] Package found:', { 
             name: pkg.name, 
             sessions: pkg.sessions,
             duration: pkg.duration 
         });
 
-        // 3. Create the new Package Activation document
         const newActivation: PackageActivation = {
             userId,
             fullName,
@@ -62,31 +54,25 @@ export const createPackageActivation = async (req: AuthenticatedRequest, res: Re
             totalSessions: pkg.sessions,
             preferredDate: new Date(preferredDate),
             status: 'Pending',
-            usedCount: 0, // Initialize to 0
-            // startDate and expiryDate will be set when status becomes 'Confirmed'
+            usedCount: 0, 
         };
 
         const activationDoc = new PackageActivationModel(newActivation);
         await activationDoc.save();
 
-        console.log('✅ [createPackageActivation] Package activation created:', activationDoc._id);
+        console.log(' [createPackageActivation] Package activation created:', activationDoc._id);
 
-        // 4. Respond with success
         res.status(201).json({ 
             message: 'Package Activation request successfully submitted.', 
             data: activationDoc 
         });
 
     } catch (error) {
-        console.error('❌ [createPackageActivation] Error:', error);
+        console.error(' [createPackageActivation] Error:', error);
         res.status(500).json({ message: 'Failed to submit package activation request.', error });
     }
 };
 
-/**
- * GET /api/package-activations (Admin route)
- * Fetches all package activation requests with pagination and filtering
- */
 export const getAllPackageActivations = async (req: Request, res: Response): Promise<void> => {
     try {
         const { 
@@ -97,7 +83,7 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
             sortOrder = 'desc' 
         } = req.query;
 
-        console.log('📦 [getAllPackageActivations] Fetching with params:', { 
+        console.log(' [getAllPackageActivations] Fetching with params:', { 
             page, 
             limit, 
             status, 
@@ -109,17 +95,14 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
         const limitNum = Number(limit);
         const skip = (pageNum - 1) * limitNum;
 
-        // Build query filter
         const filter: any = {};
         if (status && typeof status === 'string') {
             filter.status = status;
         }
 
-        // Build sort object
         const sort: any = {};
         sort[sortBy as string] = sortOrder === 'asc' ? 1 : -1;
 
-        // Fetch activations with user and package details
         const activations = await PackageActivationModel
             .find(filter)
             .populate('packageId', 'name duration sessions totalPrice')
@@ -129,7 +112,6 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
             .limit(limitNum)
             .lean();
 
-        // Calculate remaining sessions for each activation
         const activationsWithRemaining = activations.map(activation => {
             const totalSessions = activation.totalSessions || 0;
             const usedCount = activation.usedCount || 0;
@@ -141,10 +123,8 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
             };
         });
 
-        // Get total count for pagination
         const total = await PackageActivationModel.countDocuments(filter);
-
-        console.log('✅ [getAllPackageActivations] Found activations:', { 
+        console.log(' [getAllPackageActivations] Found activations:', { 
             total, 
             returned: activations.length 
         });
@@ -161,7 +141,7 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
         });
 
     } catch (error) {
-        console.error('❌ [getAllPackageActivations] Error:', error);
+        console.error(' [getAllPackageActivations] Error:', error);
         res.status(500).json({ 
             success: false,
             message: 'Failed to fetch package activations.', 
@@ -170,17 +150,12 @@ export const getAllPackageActivations = async (req: Request, res: Response): Pro
     }
 };
 
-/**
- * PATCH /api/package-activations/:id/status
- * Updates package activation status and sets start/expiry dates when confirmed
- */
 export const updatePackageActivationStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        // 🛑 MODIFIED: Destructure status and the optional startDate from the body
         const { status, startDate: requestedStartDate } = req.body;
 
-        console.log('📝 [updatePackageActivationStatus] Updating status:', { id, status, requestedStartDate });
+        console.log(' [updatePackageActivationStatus] Updating status:', { id, status, requestedStartDate });
 
         if (!status || !['Pending', 'Contacted', 'Confirmed', 'Rejected'].includes(status)) {
             res.status(400).json({ message: 'Invalid status value.' });
@@ -193,30 +168,22 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
             return;
         }
 
-        // Fetch package details to get duration
         const pkg = await PackageModel.findById(activation.packageId).select('duration sessions');
         if (!pkg) {
             res.status(404).json({ message: 'Associated package not found.' });
             return;
         }
 
-        // Apply new status
         activation.status = status;
 
-        // 🛑 MODIFIED LOGIC START
-        // Condition 1: If the status is Confirmed AND (it's the first time confirming OR a new start date is provided)
         const isConfirmedOrDateUpdate = status === 'Confirmed' && (!activation.startDate || requestedStartDate);
 
         if (isConfirmedOrDateUpdate) {
             
-            // Determine the actual start date to use. Use requested date if provided, otherwise use current date/time.
-            // If the activation was already confirmed, and requestedStartDate is undefined, this block is skipped due to the outer check.
             const actualStartDate = requestedStartDate ? new Date(requestedStartDate) : new Date();
 
-            // 1. Update the start date
             activation.startDate = actualStartDate;
             
-            // 2. Recalculate expiry date based on the new actualStartDate
             const expiryDate = new Date(actualStartDate); 
             const durationMatch = pkg.duration.match(/(\d+)-Month/);
             
@@ -224,18 +191,16 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
                 const months = parseInt(durationMatch[1]);
                 expiryDate.setMonth(expiryDate.getMonth() + months);
             } else {
-                // Default to 1 month if parsing fails
                 expiryDate.setMonth(expiryDate.getMonth() + 1);
             }
             activation.expiryDate = expiryDate;
 
-            console.log('✅ [updatePackageActivationStatus] Dates updated:', {
+            console.log(' [updatePackageActivationStatus] Dates updated:', {
                 startDate: activation.startDate,
                 expiryDate: activation.expiryDate,
                 duration: pkg.duration,
             });
         }
-        // 🛑 MODIFIED LOGIC END
 
         await activation.save();
 
@@ -253,16 +218,12 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
     }
 };
 
-/**
- * GET /api/package-activations/user/active
- * Gets active package activations for the authenticated user
- */
 export const getUserActivePackages = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.userId;
         const userEmail = req.userEmail;
 
-        console.log('📦 [getUserActivePackages] Fetching for user:', { userId, userEmail });
+        console.log('[getUserActivePackages] Fetching for user:', { userId, userEmail });
 
         if (!userId && !userEmail) {
             res.status(401).json({ message: 'User identification required.' });
@@ -307,7 +268,7 @@ export const getUserActivePackages = async (req: AuthenticatedRequest, res: Resp
                 };
             });
 
-        console.log('✅ [getUserActivePackages] Found packages:', { 
+        console.log(' [getUserActivePackages] Found packages:', { 
             total: activations.length, 
             active: activePackages.length 
         });
@@ -318,7 +279,45 @@ export const getUserActivePackages = async (req: AuthenticatedRequest, res: Resp
         });
 
     } catch (error) {
-        console.error('❌ [getUserActivePackages] Error:', error);
+        console.error(' [getUserActivePackages] Error:', error);
         res.status(500).json({ message: 'Failed to fetch active packages.', error });
     }
+};
+
+export const checkAndExpirePackages = async (): Promise<void> => {
+    try {
+        const now = new Date();
+        
+        console.log(` [CRON] Starting package expiration check at ${now.toISOString()}`);
+
+        const query = {
+            status: 'Confirmed',
+            expiryDate: { $lte: now }
+        };
+
+        const update = {
+            status: 'Expired', 
+        };
+
+        const result = await PackageActivationModel.updateMany(query, update);
+
+        if (result.modifiedCount > 0) {
+            console.log(`[CRON] Successfully expired ${result.modifiedCount} confirmed packages.`);
+        } else {
+            console.log(' [CRON] No packages found for expiration.');
+        }
+
+    } catch (error) {
+        console.error(' [CRON] Error during package expiration check:', error);
+    }
+};
+
+export const startExpirationCronJob = (): void => {
+    cron.schedule("0 0 * * *", () => {
+        checkAndExpirePackages();
+    }, {
+        timezone: "Asia/Colombo" 
+    });
+    
+    console.log(' [CRON] Package expiration job scheduled to run daily at 12:00 AM (Asia/Colombo).');
 };

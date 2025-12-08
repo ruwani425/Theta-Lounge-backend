@@ -3,30 +3,21 @@
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 import { PackageActivation } from '../interfaces/package-activation.interface';
 
-/**
- * 1. Define a base interface that strips Mongoose-managed fields and the packageId string.
- * This prevents conflicts when extending the Mongoose Document type.
- */
+
 export type IPackageActivationBase = Omit<PackageActivation, '_id' | 'createdAt' | 'updatedAt' | 'packageId'>;
 
-/**
- * 2. Extend the base interface with Mongoose Document properties.
- * We explicitly redefine `packageId` as Mongoose's ObjectId type.
- */
+
 export interface PackageActivationDocument extends IPackageActivationBase, Document {
-    // Overriding packageId to explicitly use Mongoose's ObjectId for reference
     packageId: Types.ObjectId; 
 }
 
 const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
-    // User Reference
     userId: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: false, // Optional for backward compatibility
+        required: false, 
     },
 
-    // User/Client Information
     fullName: {
         type: String,
         required: [true, 'Full name is required'],
@@ -51,10 +42,9 @@ const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
         default: '',
     },
 
-    // Package Information
     packageId: {
         type: Schema.Types.ObjectId,
-        ref: 'Package', // Reference the Package model
+        ref: 'Package', 
         required: [true, 'Package ID is required'],
     },
     packageName: {
@@ -62,7 +52,6 @@ const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
         required: [true, 'Package name is required'],
     },
 
-    // Status/Activation Details
     preferredDate: {
         type: Date,
         required: [true, 'Preferred date (request submission date) is required'],
@@ -70,12 +59,11 @@ const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Contacted', 'Confirmed', 'Rejected'],
+        enum: ['Pending', 'Contacted', 'Confirmed', 'Rejected', 'Expired'],
         default: 'Pending',
         required: true,
     },
 
-    // Session Tracking
     usedCount: {
         type: Number,
         default: 0,
@@ -83,23 +71,21 @@ const PackageActivationSchema: Schema<PackageActivationDocument> = new Schema({
     },
     totalSessions: {
         type: Number,
-        required: false, // Populated from package data
+        required: false, 
     },
 
-    // Date Tracking
     startDate: {
         type: Date,
-        required: false, // Set when status becomes 'Confirmed'
+        required: false, 
     },
     expiryDate: {
         type: Date,
-        required: false, // Calculated based on package duration
+        required: false, 
     },
 
 }, {
-    timestamps: true, // Automatically manages createdAt and updatedAt (Dates)
+    timestamps: true, 
 });
 
-// Create and export the Mongoose Model
 const PackageActivationModel: Model<PackageActivationDocument> = mongoose.model<PackageActivationDocument>('PackageActivation', PackageActivationSchema);
 export default PackageActivationModel;

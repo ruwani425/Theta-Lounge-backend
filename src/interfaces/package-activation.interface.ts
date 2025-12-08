@@ -5,32 +5,26 @@ import { Package } from './package.interface';
 export interface PackageActivation {
   _id?: string
   
-  // User Reference
   userId?: string
   
-  // User/Client Information
   fullName: string
   email: string
   phone: string
   address: string
-  message?: string // Optional note
+  message?: string 
 
-  // Package Information
   packageId: string
-  packageName: string // Storing this for historical/readability purposes
-  totalSessions?: number // Total sessions in the package
+  packageName: string 
+  totalSessions?: number 
 
-  // Status/Activation Details
-  preferredDate: Date // The date/time of the request submission
-  status: 'Pending' | 'Contacted' | 'Confirmed' | 'Rejected'
+  preferredDate: Date 
+  status: 'Pending' | 'Contacted' | 'Confirmed' | 'Rejected' | 'Expired'
   
-  // Session Tracking
-  usedCount?: number // Number of sessions used
-  remainingSessions?: number // Calculated: totalSessions - usedCount
+  usedCount?: number
+  remainingSessions?: number 
   
-  // Date Tracking
-  startDate?: Date // When package was confirmed/activated
-  expiryDate?: Date // When package expires
+  startDate?: Date
+  expiryDate?: Date 
   
   createdAt?: Date
   updatedAt?: Date
@@ -38,6 +32,5 @@ export interface PackageActivation {
 
 export interface PaginatedPackageActivationsResponse {
   data: PackageActivation[]
-  // Assuming PaginationResponse is imported or defined elsewhere
   pagination: any 
 }
