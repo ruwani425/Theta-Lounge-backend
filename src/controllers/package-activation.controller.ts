@@ -296,13 +296,13 @@ export const checkAndExpirePackages = async (): Promise<void> => {
         };
 
         const update = {
-            status: 'Expired', 
+            status: 'Expired' as const, 
         };
 
         const result = await PackageActivationModel.updateMany(query, update);
 
         if (result.modifiedCount > 0) {
-            console.log(`[CRON] Successfully expired ${result.modifiedCount} confirmed packages.`);
+            console.log(` [CRON] Successfully expired ${result.modifiedCount} confirmed packages.`);
         } else {
             console.log(' [CRON] No packages found for expiration.');
         }
@@ -313,10 +313,14 @@ export const checkAndExpirePackages = async (): Promise<void> => {
 };
 
 export const startExpirationCronJob = (): void => {
-    cron.schedule("0 0 * * *", () => {
+    
+    const PRODUCTION_SCHEDULE = "0 0 * * *"; 
+    const timezone = "Asia/Colombo";
+
+    cron.schedule(PRODUCTION_SCHEDULE, () => {
         checkAndExpirePackages();
     }, {
-        timezone: "Asia/Colombo" 
+        timezone: timezone 
     });
     
     console.log(' [CRON] Package expiration job scheduled to run daily at 12:00 AM (Asia/Colombo).');
