@@ -258,7 +258,7 @@ export const createAppointment = async (req: Request, res: Response) => {
     await session.abortTransaction();
     session.endSession();
 
-    console.error("❌ [createAppointment] Error:", error);
+    console.error(" [createAppointment] Error:", error);
 
     let errorMessage = "Failed to create appointment due to a server error.";
     if (error.message.includes("Sold Out")) {
