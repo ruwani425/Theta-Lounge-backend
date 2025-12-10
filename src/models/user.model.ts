@@ -16,6 +16,10 @@ const UserSchema: Schema = new Schema(
       default: "client",
       required: true 
     },
+    permissions: { 
+      type: [String], 
+      default: [], // Default to no extra permissions
+    },
   },
   { timestamps: true }
 );

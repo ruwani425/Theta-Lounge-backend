@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import {
     getAllUsers,
-    getUserById,
     getMyActivatedPackages,
     getMyProfile,
-    updateUserRole,
     getClientDashboardDetails,
+    // New Admin Management imports
+    getAllAdmins,
+    addAdminUser,
+    revokeAdminAccess,
 } from '../controllers/user.controller';
 import { authenticateToken, requireAdmin } from '../middlewares/auth.middleware';
 
@@ -18,17 +20,29 @@ router.get('/me', authenticateToken, getMyProfile);
 // Get current user's activated packages
 router.get('/me/packages', authenticateToken, getMyActivatedPackages);
 
-// ===== Admin Routes =====
+// ===== Admin Routes (Client Management) =====
 // Get all users
 router.get('/', authenticateToken, requireAdmin, getAllUsers);
 
-// Get single user by ID
-router.get('/:userId', authenticateToken, requireAdmin, getUserById);
-
-// Update user role
-router.patch('/:userId/role', authenticateToken, requireAdmin, updateUserRole);
-
 router.get('/dashboard/:email', authenticateToken, requireAdmin, getClientDashboardDetails);
 
-export default router;
+// ===================================================
+// NEW: Admin Management (Access Control) Routes
+// These routes are nested under /users/admin
+// ===================================================
+const adminManagementRouter = Router();
+adminManagementRouter.use(authenticateToken, requireAdmin); 
 
+// GET /api/users/admin/list - Get all admins (excluding self)
+adminManagementRouter.get('/list', getAllAdmins);
+
+// POST /api/users/admin/add - Create/update admin user and set permissions
+adminManagementRouter.post('/add', addAdminUser);
+
+// DELETE /api/users/admin/:userId - Revoke admin access
+adminManagementRouter.delete('/:userId', revokeAdminAccess);
+
+// Attach the new admin management sub-router
+router.use('/admin', adminManagementRouter);
+
+export default router;
