@@ -240,18 +240,19 @@ export const createAppointment = async (req: Request, res: Response) => {
 
     console.log("✅ [createAppointment] Appointment created successfully");
 
-    const responseAppointment = {
-      ...newAppointment[0].toObject(),
-      status: newAppointment[0].status.toLowerCase(),
-      packageUsed: !!packageActivationId,
-    };
-
-    res.status(201).json({
-      success: true,
-      message: packageActivationId
-        ? "Appointment successfully created using your package session."
-        : "Appointment successfully created and calendar updated.",
-      data: responseAppointment,
+    const responseAppointment = {
+      ...newAppointment[0].toObject(),
+      status: newAppointment[0].status.toLowerCase(),
+      packageUsed: !!packageActivationId,
+      reservationId: newAppointment[0].reservationId,
+    };
+    
+    res.status(201).json({
+      success: true,
+      message: packageActivationId
+        ? "Appointment successfully created using your package session."
+        : "Appointment successfully created and calendar updated.",
+      data: responseAppointment,
     });
   } catch (error: any) {
     await session.abortTransaction();
