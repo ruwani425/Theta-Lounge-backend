@@ -9,7 +9,8 @@ import {
   getBookedTimesByDate,
   updateAppointmentDetails,
   updateAppointmentStatus,
-  getMyReservations, // <-- NEW IMPORT
+  getMyReservations,
+  getPackageAppointmentCounts, // <-- NEW IMPORT
 } from "../controllers/appointment.controller"
 
 const router = Router()
@@ -26,5 +27,6 @@ router.get("/", getAppointmentDetails)
 router.put("/:id/status", updateAppointmentStatus)
 router.get("/booked-times/:date", getBookedTimesByDate)
 router.put("/:id", updateAppointmentDetails)
+router.get("/package-counts/:packageId", authenticateToken, getPackageAppointmentCounts);
 
 export default router

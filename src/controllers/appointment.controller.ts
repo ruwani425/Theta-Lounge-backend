@@ -653,3 +653,58 @@ export const getMyReservations = async (req: AuthenticatedRequest, res: Response
         });
     }
 };
+
+export const getPackageAppointmentCounts = async (req: Request, res: Response) => {
+    const { packageId } = req.params;
+
+    if (!packageId || !mongoose.Types.ObjectId.isValid(packageId)) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid Package Activation ID.",
+        });
+    }
+
+    try {
+        console.log(`📊 [getPackageAppointmentCounts] Counting sessions for PackageActivation ID: ${packageId}`);
+        
+        // Match appointments to the package ID and group by status
+        const counts = await AppointmentModel.aggregate([
+            {
+                $match: {
+                    packageActivationId: new mongoose.Types.ObjectId(packageId),
+                },
+            },
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 },
+                },
+            },
+        ]);
+
+        // Transform results into a simple map { "pending": 3, "completed": 5, "canceled": 1 }
+        const countsMap: Record<string, number> = { 
+            pending: 0, 
+            completed: 0, 
+            cancelled: 0 
+        };
+        counts.forEach(item => {
+            countsMap[item._id.toLowerCase()] = item.count;
+        });
+
+        console.log(`✅ [getPackageAppointmentCounts] Counts retrieved:`, countsMap);
+
+        res.status(200).json({
+            success: true,
+            message: "Package appointment counts retrieved successfully.",
+            data: countsMap,
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching package appointment counts:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve package appointment counts due to a server error.",
+        });
+    }
+};
