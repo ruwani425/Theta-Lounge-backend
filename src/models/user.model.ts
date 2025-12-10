@@ -8,8 +8,7 @@ const UserSchema: Schema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     profileImage: { type: String },
-    firebaseUid: { type: String, required: false, unique: true },
-
+    firebaseUid: { type: String, required: false, unique: true, sparse: true },
     role: { 
       type: String, 
       enum: ["admin", "client"], 

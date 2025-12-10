@@ -24,7 +24,6 @@ const seedAdmin = async () => {
             email: "ruwaniranthika2001@gmail.com",
             password: hashedPassword,
             role: "admin",
-            firebaseUid: "admin-seeder-1",
             permissions: ALL_ADMIN_PERMISSIONS, 
         });
 
