@@ -8,7 +8,7 @@ export interface AuthenticatedRequest extends Request {
     userId?: string;
     userRole?: 'admin' | 'client';
     userEmail?: string;
-} 
+}
 
 // Interface for JWT payload
 interface JWTPayload {
@@ -26,11 +26,11 @@ export const authenticateToken = async (
     next: NextFunction
 ) => {
     try {
-        // 1. Check for the token in the Authorization header
-        const authHeader = req.headers.authorization;
-        
-        // Authorization: Bearer <TOKEN>
-        const token = authHeader && authHeader.split(' ')[1];
+    // 1. Check for the token in the Authorization header
+    const authHeader = req.headers.authorization;
+    
+    // Authorization: Bearer <TOKEN>
+    const token = authHeader && authHeader.split(' ')[1];
 
         console.log('🔐 [Auth Middleware] Request:', {
             path: req.path,
@@ -39,14 +39,14 @@ export const authenticateToken = async (
             hasToken: !!token,
         });
 
-        if (!token) {
+    if (!token) {
             console.warn('⚠️ [Auth Middleware] No token provided');
-            return res.status(401).json({ 
+        return res.status(401).json({ 
                 success: false,
-                message: 'Access token required. Please log in.',
+            message: 'Access token required. Please log in.',
                 redirectTo: '/login'
-            });
-        }
+        });
+    }
 
         // 2. Verify the token
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;

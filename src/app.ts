@@ -8,6 +8,9 @@ import appointmentRoutes from "./routes/appointment.routes";
 import packageRoutes from "./routes/package.routes";
 import packageActivationRoutes from "./routes/package-activation.routes";
 import userRoutes from "./routes/user.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
+import reportsRoutes from "./routes/reports.routes";
+import blogRoutes from "./routes/blog.routes";
 
 const app = express();
 
@@ -26,5 +29,8 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/package-activations", packageActivationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/blogs", blogRoutes);
 
 export default app;

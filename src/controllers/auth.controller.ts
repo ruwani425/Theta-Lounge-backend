@@ -9,16 +9,29 @@ export const googleAuth = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid Google data" });
     }
 
-    // Must select('+role') or ensure role is available on the returned model
-    let user = await User.findOne({ email }).select('+role'); 
+    // Must select('+role +permissions') to include role and permissions fields
+    let user = await User.findOne({ email }).select('+role +permissions'); 
 
     if (!user) {
+      const isAdmin = email.includes("admin");
       user = await User.create({
         name,
         email,
         profileImage,
         firebaseUid: uid,
-        role: email.includes("admin") ? "admin" : "client",
+        role: isAdmin ? "admin" : "client",
+        // Set default permissions for new admin users
+        permissions: isAdmin ? [
+          'reservations',
+          'tanks',
+          'users',
+          'packages',
+          'activations',
+          'reports',
+          'content',
+          'access_control',
+          'settings'
+        ] : [],
       });
     }
 
@@ -31,14 +44,21 @@ export const googleAuth = async (req: Request, res: Response) => {
         email: user.email,
         profileImage: user.profileImage,
         role: user.role,
+        permissions: user.role === 'admin' ? (user.permissions || []) : undefined,
         // firebaseUid is excluded from client response for security/simplicity
     };
+
+    console.log('👤 User authenticated:', {
+      email: user.email,
+      role: user.role,
+      permissions: userResponse.permissions
+    });
 
     return res.status(200).json({
       success: true,
       message: "Authentication successful",
       token,
-      user: userResponse, // <-- Send the user object here
+      user: userResponse, // <-- Send the user object here with permissions
     });
   } catch (error) {
     console.error("Google Auth Error:", error);
