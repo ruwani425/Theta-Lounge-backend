@@ -15,7 +15,10 @@ import blogRoutes from "./routes/blog.routes";
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+      "http://localhost:5173",
+      "https://theta-lounge-frontend.vercel.app",
+  ],
   credentials: true,
 }));
 
