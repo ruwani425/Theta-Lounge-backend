@@ -12,10 +12,9 @@ import userRoutes from "./routes/user.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import reportsRoutes from "./routes/reports.routes";
 import blogRoutes from "./routes/blog.routes";
+import emailRoutes from "./routes/email.routes";
 
 const app = express();
-
-// app.ts
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -59,5 +58,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use('/api/email', emailRoutes);
 
 export default app;

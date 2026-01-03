@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/server.ts",
+    "dev": "vercel dev",
+    "dev2": "ts-node-dev src/server.ts",
     "build": "tsc",
     "start": "node dist/server.ts",
     "clear:activations": "ts-node src/script/runClearActivations.ts"
@@ -21,7 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.20.1",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.10"
+    "nodemailer": "^7.0.12"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
