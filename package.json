@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "vercel dev",
-    "dev2": "ts-node-dev src/server.ts",
+    "dev2": "vercel dev",
+    "dev": "ts-node-dev src/server.ts",
     "build": "tsc",
     "start": "node dist/server.ts",
     "clear:activations": "ts-node src/script/runClearActivations.ts"
