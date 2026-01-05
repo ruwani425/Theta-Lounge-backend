@@ -13,6 +13,7 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import reportsRoutes from "./routes/reports.routes";
 import blogRoutes from "./routes/blog.routes";
 import emailRoutes from "./routes/email.routes";
+import contactRoutes from "./routes/contact.routes";
 
 const app = express();
 
@@ -56,5 +57,6 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/contact', contactRoutes);
 
 export default app;
