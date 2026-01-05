@@ -19,7 +19,7 @@ const TankSchema: Schema = new Schema(
     benefits: { type: String, required: true },
     status: { type: String, required: true },
   },
-  { timestamps: true } // automatically adds createdAt & updatedAt
+  { timestamps: true }
 );
 
 export const Tank = mongoose.model<ITank>("Tank", TankSchema);

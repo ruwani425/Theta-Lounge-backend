@@ -22,7 +22,7 @@ const UserSchema: Schema = new Schema(
     },
     permissions: { 
       type: [String], 
-      default: [], // Default to no extra permissions
+      default: [], 
     },
   },
   { timestamps: true }

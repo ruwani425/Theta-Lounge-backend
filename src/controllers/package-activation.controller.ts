@@ -376,7 +376,6 @@ export const createPackageActivation = async (req: AuthenticatedRequest, res: Re
         const activationDoc = new PackageActivationModel(newActivation);
         await activationDoc.save();
 
-        // --- EMAIL: PENDING REQUEST ACKNOWLEDGMENT ---
         const emailSubject = "Package Activation Request Received - Theta Lounge";
         const emailHtml = `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
@@ -451,7 +450,6 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
 
         await activation.save();
 
-        // --- EMAIL: STATUS CHANGE NOTIFICATION ---
         if (oldStatus !== status) {
             let statusSubject = `Update: Your ${activation.packageName} Package Status`;
             let statusColor = "#3498db"; 
@@ -492,7 +490,7 @@ export const updatePackageActivationStatus = async (req: AuthenticatedRequest, r
         });
 
     } catch (error) {
-        console.error('❌ [updatePackageActivationStatus] Error:', error);
+        console.error('[updatePackageActivationStatus] Error:', error);
         res.status(500).json({ message: 'Failed to update status.', error });
     }
 };
@@ -565,7 +563,6 @@ export const checkAndExpirePackages = async (): Promise<void> => {
         const now = new Date();
         console.log(` [CRON] Starting package expiration check at ${now.toISOString()}`);
 
-        // 1. Find all confirmed packages that have reached their expiry date
         const expiredPackages = await PackageActivationModel.find({
             status: 'Confirmed',
             expiryDate: { $lte: now }
@@ -576,12 +573,10 @@ export const checkAndExpirePackages = async (): Promise<void> => {
             return;
         }
 
-        // 2. Loop through each expired package to update status and send email
         for (const activation of expiredPackages) {
-            activation.status = 'Expired' as any; // Cast to any if using strict enum
+            activation.status = 'Expired' as any;
             await activation.save();
 
-            // --- EMAIL: EXPIRATION NOTIFICATION ---
             const emailSubject = `Package Expired: ${activation.packageName}`;
             const emailHtml = `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">

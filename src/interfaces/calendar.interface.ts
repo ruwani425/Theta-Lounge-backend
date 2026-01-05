@@ -1,4 +1,3 @@
-// Assuming this is your calendar.interface.ts file
 import { Types } from "mongoose";
 
 export interface ICalendarDetail {

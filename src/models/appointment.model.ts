@@ -11,8 +11,8 @@ const AppointmentSchema: Schema<IAppointment> = new Schema(
       type: String,
       required: true,
       match: /^\d{4}-\d{2}-\d{2}$/,
-      index: true, // Added index for faster date range queries
-    },
+      index: true,
+    },  
     time: {
       type: String,
       required: true,

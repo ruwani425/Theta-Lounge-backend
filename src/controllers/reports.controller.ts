@@ -4,13 +4,9 @@ import PackageActivationModel from '../models/package-activation.model';
 import PackageModel from '../models/package.model';
 import settingsModel from '../models/settings.model';
 
-/**
- * GET /api/reports/analytics
- * Returns comprehensive analytics and reports data
- */
 export const getReportsAnalytics = async (req: Request, res: Response) => {
     try {
-        const { dateRange = '30' } = req.query; // 7, 30, 90 days
+        const { dateRange = '30' } = req.query; 
         const daysBack = parseInt(dateRange as string);
 
         console.log(`📊 [getReportsAnalytics] Fetching reports for last ${daysBack} days`);
@@ -21,7 +17,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
         
         const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
-        // 1. TOTAL REVENUE (Current Period)
         const currentPackages = await PackageActivationModel.find({
             status: 'Confirmed',
             createdAt: { $gte: startDate }
@@ -31,7 +26,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             return sum + (activation.packageId?.totalPrice || 0);
         }, 0);
 
-        // Previous period revenue for comparison
         const previousPackages = await PackageActivationModel.find({
             status: 'Confirmed',
             createdAt: { $gte: previousPeriodStart, $lt: startDate }
@@ -45,7 +39,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             ? parseFloat((((currentRevenue - previousRevenue) / previousRevenue) * 100).toFixed(1))
             : 0;
 
-        // 2. BOOKINGS STATISTICS
         const currentBookings = await AppointmentModel.countDocuments({
             createdAt: { $gte: startDate },
             status: { $in: ['pending', 'completed'] }
@@ -60,12 +53,9 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             ? parseFloat((((currentBookings - previousBookings) / previousBookings) * 100).toFixed(1))
             : 0;
 
-        // 3. AVERAGE SESSION VALUE
         const avgSessionValue = currentBookings > 0 
             ? Math.round(currentRevenue / currentBookings)
             : 0;
-
-        // 4. CANCELLATION RATE
         const totalAppointments = await AppointmentModel.countDocuments({
             createdAt: { $gte: startDate }
         });
@@ -79,7 +69,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             ? parseFloat(((cancelledAppointments / totalAppointments) * 100).toFixed(1))
             : 0;
 
-        // 5. TOP PERFORMING PACKAGE
         const packageStats = await PackageActivationModel.aggregate([
             {
                 $match: {
@@ -103,7 +92,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             topPackageName = topPackage?.name || 'N/A';
         }
 
-        // 6. UTILIZATION RATE
         const systemSettings = await settingsModel.findOne();
         const todayFormatted = formatDate(now);
         const todayBookings = await AppointmentModel.countDocuments({
@@ -127,7 +115,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             ? Math.round((todayBookings / totalSessions) * 100)
             : 0;
 
-        // 7. WEEKLY BOOKING TRENDS (Last 4 weeks)
         const weeklyTrends = [];
         const weeksToShow = Math.min(4, Math.ceil(daysBack / 7));
         
@@ -156,7 +143,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             });
         }
 
-        // 8. STATUS BREAKDOWN
         const statusCounts = await AppointmentModel.aggregate([
             {
                 $match: {
@@ -188,8 +174,7 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
                 : 0
         }));
 
-        // 9. DAILY TRENDS (for the period)
-        const daysToShow = Math.min(daysBack, 30); // Show max 30 days
+        const daysToShow = Math.min(daysBack, 30); 
         const dailyTrends = [];
         
         for (let i = daysToShow - 1; i >= 0; i--) {
@@ -207,7 +192,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             });
         }
 
-        // 10. TOP PACKAGES BY REVENUE
         const topPackages = await PackageActivationModel.aggregate([
             {
                 $match: {
@@ -274,7 +258,6 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
     }
 };
 
-// Helper function to calculate total minutes between two times
 function calculateTotalMinutes(openTime: string, closeTime: string): number {
     const [openHour, openMin] = openTime.split(':').map(Number);
     const [closeHour, closeMin] = closeTime.split(':').map(Number);

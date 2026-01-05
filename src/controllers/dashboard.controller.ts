@@ -4,15 +4,11 @@ import PackageActivationModel from '../models/package-activation.model';
 import PackageModel from '../models/package.model';
 import settingsModel from '../models/settings.model';
 
-/**
- * GET /api/dashboard/stats
- * Returns dashboard statistics including revenue, bookings, and trends
- */
+
 export const getDashboardStats = async (req: Request, res: Response) => {
     try {
-        console.log('📊 [getDashboardStats] Fetching dashboard statistics');
+        console.log('[getDashboardStats] Fetching dashboard statistics');
 
-        // Get date ranges for calculations
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -20,10 +16,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-        // Format dates for MongoDB queries (YYYY-MM-DD)
         const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
-        // 1. TOTAL REVENUE (Current Month)
         const currentMonthPackages = await PackageActivationModel.find({
             status: 'Confirmed',
             createdAt: { $gte: startOfMonth }
@@ -33,7 +27,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             return sum + (activation.packageId?.totalPrice || 0);
         }, 0);
 
-        // Previous month revenue for comparison
         const lastMonthPackages = await PackageActivationModel.find({
             status: 'Confirmed',
             createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth }
@@ -47,7 +40,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             ? (((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100).toFixed(1)
             : '0.0';
 
-        // 2. NEW BOOKINGS (Last 30 days vs previous 30 days)
         const recentBookings = await AppointmentModel.countDocuments({
             createdAt: { $gte: thirtyDaysAgo },
             status: { $in: ['pending', 'completed'] }
@@ -62,18 +54,15 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             ? (((recentBookings - previousBookings) / previousBookings) * 100).toFixed(1)
             : '0.0';
 
-        // 3. TANK AVAILABILITY
         const systemSettings = await settingsModel.findOne();
         const numberOfTanks = systemSettings?.numberOfTanks || 2;
         
-        // Get today's bookings
         const today = formatDate(now);
         const todayBookings = await AppointmentModel.countDocuments({
             date: today,
             status: { $in: ['pending', 'completed'] }
         });
 
-        // Calculate total possible sessions for today
         const sessionDuration = systemSettings?.sessionDuration || 60;
         const cleaningBuffer = systemSettings?.cleaningBuffer || 30;
         const openTime = systemSettings?.openTime || '09:00';
@@ -88,7 +77,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             ? Math.round((todayBookings / totalSessions) * 100)
             : 0;
 
-        // Get yesterday's availability for comparison
         const yesterday = new Date(now);
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayFormatted = formatDate(yesterday);
@@ -104,12 +92,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
         const availabilityChange = (availabilityPercent - yesterdayAvailability).toFixed(1);
 
-        // 4. AVERAGE SESSION DURATION
-        // For now, return system default
         const avgSession = `${sessionDuration} min`;
-        const sessionChange = '+0%'; // Can be calculated from historical data
-
-        // 5. WEEKLY BOOKING TRENDS (Last 4 weeks)
+        const sessionChange = '+0%';
         const weeklyTrends = [];
         for (let i = 3; i >= 0; i--) {
             const weekStart = new Date(now.getTime() - (i * 7 + 7) * 24 * 60 * 60 * 1000);
@@ -126,11 +110,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             });
         }
 
-        // 6. TANK UTILIZATION (per tank if available)
         const tankUtilization = [];
         for (let i = 0; i < numberOfTanks; i++) {
-            // For now, calculate based on overall utilization
-            // In a real system, you'd track which tank was used for each booking
             const utilization = Math.max(0, Math.min(100, availabilityPercent + (Math.random() * 20 - 10)));
             tankUtilization.push({
                 name: `Tank ${i + 1}`,
@@ -139,7 +120,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             });
         }
 
-        // 7. REVENUE BREAKDOWN BY SERVICE TYPE
         const packages = await PackageModel.find();
         const revenueBreakdown = await Promise.all(
             packages.map(async (pkg) => {
@@ -156,7 +136,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             })
         );
 
-        // Add single session bookings
         const singleSessionBookings = await AppointmentModel.countDocuments({
             packageActivationId: { $exists: false },
             createdAt: { $gte: startOfMonth },
@@ -169,7 +148,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
             value: singleSessionBookings * floatPrice
         });
 
-        console.log('✅ [getDashboardStats] Statistics calculated successfully');
+        console.log(' [getDashboardStats] Statistics calculated successfully');
 
         res.status(200).json({
             success: true,
@@ -204,7 +183,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('❌ [getDashboardStats] Error:', error);
+        console.error('[getDashboardStats] Error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch dashboard statistics',
@@ -213,7 +192,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     }
 };
 
-// Helper function to calculate total minutes between two times
 function calculateTotalMinutes(openTime: string, closeTime: string): number {
     const [openHour, openMin] = openTime.split(':').map(Number);
     const [closeHour, closeMin] = closeTime.split(':').map(Number);

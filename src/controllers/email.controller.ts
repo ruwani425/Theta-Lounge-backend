@@ -10,8 +10,8 @@ export const sendNotification = async (req: Request, res: Response) => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    debug: true, // Show debug output
-    logger: true  // Log information to console
+    debug: true,
+    logger: true
   });
 
   try {

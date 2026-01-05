@@ -336,9 +336,8 @@ import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import UserModel, { IUserDocument } from '../models/user.model';
 import PackageActivationModel from '../models/package-activation.model';
 import AppointmentModel from '../models/appointment.model';
-import { sendEmail } from "../utils/send.email"; // Import your email utility
+import { sendEmail } from "../utils/send.email"; 
 
-// --- Admin Management Helpers & Constants ---
 const isSelfModification = (req: AuthenticatedRequest, targetId: string): boolean => {
     return req.userId === targetId;
 };
@@ -348,9 +347,6 @@ const VALID_PERMISSIONS = [
     "activations", "reports", "content", "access_control", "settings"
 ];
 
-/**
- * Get all users (Admin only)
- */
 export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const users = await UserModel.find()
@@ -372,9 +368,6 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
-/**
- * Get current user's activated packages (Client only)
- */
 export const getMyActivatedPackages = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const userEmail = req.userEmail;
@@ -394,9 +387,6 @@ export const getMyActivatedPackages = async (req: AuthenticatedRequest, res: Res
     }
 };
 
-/**
- * Get current user's profile
- */
 export const getMyProfile = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const userId = req.userId;
@@ -409,9 +399,6 @@ export const getMyProfile = async (req: AuthenticatedRequest, res: Response) => 
     }
 };
 
-/**
- * Client Dashboard Details (Admin only)
- */
 export const getClientDashboardDetails = async (req: Request, res: Response) => {
     try {
         const { email } = req.params;
@@ -445,9 +432,6 @@ export const getClientDashboardDetails = async (req: Request, res: Response) => 
     }
 };
 
-/**
- * Get all admins (Master Admin only)
- */
 export const getAllAdmins = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const admins = await UserModel.find({ role: 'admin', _id: { $ne: req.userId } })
@@ -458,10 +442,6 @@ export const getAllAdmins = async (req: AuthenticatedRequest, res: Response) => 
     }
 };
 
-/**
- * POST /api/users/admin/add
- * --- EMAIL NOTIFICATION ADDED ---
- */
 export const addAdminUser = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { email, permissions } = req.body;
@@ -490,7 +470,6 @@ export const addAdminUser = async (req: AuthenticatedRequest, res: Response) => 
             await user.save();
         }
 
-        // --- EMAIL: ADMIN PERMISSIONS UPDATED ---
         const emailSubject = "Administrative Access Granted - Theta Lounge";
         const emailHtml = `
             <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
@@ -517,10 +496,6 @@ export const addAdminUser = async (req: AuthenticatedRequest, res: Response) => 
     }
 };
 
-/**
- * DELETE /api/users/admin/:userId
- * --- EMAIL NOTIFICATION ADDED ---
- */
 export const revokeAdminAccess = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const { userId } = req.params;
@@ -537,7 +512,6 @@ export const revokeAdminAccess = async (req: AuthenticatedRequest, res: Response
 
         if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
-        // --- EMAIL: ADMIN ACCESS REVOKED ---
         const emailSubject = "Administrative Access Revoked";
         const emailHtml = `
             <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">

@@ -1091,7 +1091,7 @@ import mongoose from "mongoose";
 import AppointmentModel from "../models/appointment.model";
 import CalendarDetailModel from "../models/calendar.detail.model";
 import PackageActivationModel from "../models/package-activation.model";
-import UserModel from "../models/user.model"; // Added User model import
+import UserModel from "../models/user.model";
 import {
   AppointmentCount,
   IAppointment,
@@ -1241,7 +1241,6 @@ export const createAppointment = async (req: Request, res: Response) => {
     await session.commitTransaction();
     session.endSession();
 
-    // --- CLIENT EMAIL NOTIFICATION ---
     const clientSubject = "Your Session is Scheduled! - Theta Lounge";
     const clientHtml = `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #f0f0f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -1268,9 +1267,8 @@ export const createAppointment = async (req: Request, res: Response) => {
       </div>
     `;
 
-    sendEmail(email, clientSubject, clientHtml).catch(err => console.error("📧 Client Email Failed:", err));
+    sendEmail(email, clientSubject, clientHtml).catch(err => console.error("Client Email Failed:", err));
 
-    // --- DYNAMIC ADMIN NOTIFICATION ---
     const notifyAdmins = async () => {
       try {
         const admins = await UserModel.find({ role: "admin" }).select("email");
@@ -1295,7 +1293,7 @@ export const createAppointment = async (req: Request, res: Response) => {
           await sendEmail(adminEmails.join(","), adminSubject, adminHtml);
         }
       } catch (err) {
-        console.error("❌ Failed to notify admins:", err);
+        console.error("Failed to notify admins:", err);
       }
     };
     notifyAdmins();
@@ -1315,9 +1313,8 @@ export const createAppointment = async (req: Request, res: Response) => {
 export const updateAppointmentStatus = async (req: Request, res: Response) => {
   try {
     const appointmentId = req.params.id;
-    const { status: uiStatus } = req.body; // Expecting 'completed', 'cancelled', etc.
+    const { status: uiStatus } = req.body;
 
-    // 1. Update the appointment and get the updated document
     const updatedAppointment = await AppointmentModel.findByIdAndUpdate(
       appointmentId,
       { $set: { status: uiStatus } },
@@ -1331,7 +1328,6 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
     const { email, name, date, time, reservationId } = updatedAppointment;
     const statusLower = uiStatus.toLowerCase();
 
-    // 2. Email Logic based on Status
     let emailSubject = "";
     let emailHtml = "";
 
@@ -1371,10 +1367,9 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
       `;
     }
 
-    // 3. Send the email if a template was created
     if (emailHtml) {
       sendEmail(email, emailSubject, emailHtml).catch((err) =>
-        console.error(`📧 Status Email Failed (${statusLower}):`, err)
+        console.error(`Status Email Failed (${statusLower}):`, err)
       );
     }
 

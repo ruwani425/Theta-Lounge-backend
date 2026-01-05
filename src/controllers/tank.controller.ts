@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { Tank } from "../models/tank.model";
 
-// POST /tanks
 export const addTank = async (req: Request, res: Response) => {
   try {
     const { name, capacity, length, width, benefits, status } = req.body;
@@ -24,10 +23,9 @@ export const addTank = async (req: Request, res: Response) => {
   }
 };
 
-// GET /tanks/last
 export const getLastTank = async (req: Request, res: Response) => {
   try {
-    const lastTank = await Tank.findOne().sort({ _id: -1 }); // last added
+    const lastTank = await Tank.findOne().sort({ _id: -1 }); 
     res.status(200).json(lastTank);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch last tank" });
@@ -46,12 +44,12 @@ export const getAllTanks = async (req:Request, res:Response) => {
 
 export const updateTankStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { status } = req.body; // Expects { status: "Ready" | "Maintenance" }
+    const { status } = req.body; 
 
     try {
         const updatedTank = await Tank.findByIdAndUpdate(
             id,
-            { status: status }, // Only update the status field
+            { status: status }, 
             { new: true, runValidators: true }
         );
 
@@ -67,7 +65,6 @@ export const updateTankStatus = async (req: Request, res: Response) => {
 };
 
 
-// PATCH /tanks/:id (Used for full tank editing AND status updates)
 export const updateTank = async (req: Request, res: Response) => {
     try {
         const tankId = req.params.id;
@@ -75,7 +72,7 @@ export const updateTank = async (req: Request, res: Response) => {
 
         const updatedTank = await Tank.findByIdAndUpdate(
             tankId,
-            { $set: updateData }, // Use $set to allow partial updates (PATCH semantics)
+            { $set: updateData }, 
             { new: true, runValidators: true }
         );
 
@@ -90,7 +87,6 @@ export const updateTank = async (req: Request, res: Response) => {
     }
 };
 
-// DELETE /tanks/:id
 export const deleteTank = async (req: Request, res: Response) => {
     try {
         const deletedTank = await Tank.findByIdAndDelete(req.params.id);
@@ -108,21 +104,16 @@ export const deleteTank = async (req: Request, res: Response) => {
 
 export const getTankById = async (req: Request, res: Response) => {
     try {
-        const tankId = req.params.id; // Correctly grabs the ID from the URL
-        
-        // Find the specific tank in the database
+        const tankId = req.params.id; 
         const tank = await Tank.findById(tankId); 
 
         if (!tank) {
-            // Returns the 404 error the frontend is currently receiving if the ID is wrong
             return res.status(404).json({ message: "Tank not found" });
         }
 
-        // Returns the tank data, which the frontend needs to populate the form
         res.status(200).json(tank); 
     } catch (error) {
         console.error("Failed to fetch tank:", error);
-        // This handles cases where the ID format is invalid
         res.status(500).json({ message: "Failed to fetch tank" });
     }
 };

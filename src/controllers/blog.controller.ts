@@ -1,15 +1,11 @@
 import { Request, Response } from 'express';
 import BlogModel from '../models/blog.model';
 
-/**
- * CREATE a new blog post
- * POST /api/blogs
- */
+
 export const createBlog = async (req: Request, res: Response) => {
     try {
         const { title, slug, description, content, imageUrl, author, category, tags, isActive } = req.body;
 
-        // Validate required fields
         if (!title || !slug || !description || !content || !imageUrl) {
             return res.status(400).json({
                 success: false,
@@ -17,7 +13,6 @@ export const createBlog = async (req: Request, res: Response) => {
             });
         }
 
-        // Check if slug already exists
         const existingBlog = await BlogModel.findOne({ slug });
         if (existingBlog) {
             return res.status(400).json({
@@ -38,7 +33,7 @@ export const createBlog = async (req: Request, res: Response) => {
             isActive: isActive || false,
         });
 
-        console.log('✅ Blog created:', blog.title);
+        console.log('Blog created:', blog.title);
 
         res.status(201).json({
             success: true,
@@ -46,7 +41,7 @@ export const createBlog = async (req: Request, res: Response) => {
             data: blog,
         });
     } catch (error) {
-        console.error('❌ Error creating blog:', error);
+        console.error('Error creating blog:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to create blog',
@@ -55,10 +50,7 @@ export const createBlog = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * GET all blogs (Admin)
- * GET /api/blogs/admin
- */
+
 export const getAllBlogsAdmin = async (req: Request, res: Response) => {
     try {
         const { page = 1, limit = 10, status, search } = req.query;
@@ -69,14 +61,12 @@ export const getAllBlogsAdmin = async (req: Request, res: Response) => {
 
         const filter: any = {};
 
-        // Filter by status
         if (status === 'active') {
             filter.isActive = true;
         } else if (status === 'inactive') {
             filter.isActive = false;
         }
 
-        // Search by title or description
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
@@ -104,7 +94,7 @@ export const getAllBlogsAdmin = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error('❌ Error fetching blogs:', error);
+        console.error('Error fetching blogs:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch blogs',
@@ -112,10 +102,6 @@ export const getAllBlogsAdmin = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * GET all active blogs (Public)
- * GET /api/blogs
- */
 export const getAllActiveBlogs = async (req: Request, res: Response) => {
     try {
         const { page = 1, limit = 10, category, search } = req.query;
@@ -126,12 +112,9 @@ export const getAllActiveBlogs = async (req: Request, res: Response) => {
 
         const filter: any = { isActive: true };
 
-        // Filter by category
         if (category) {
             filter.category = category;
         }
-
-        // Search by title or description
         if (search) {
             filter.$or = [
                 { title: { $regex: search, $options: 'i' } },
@@ -140,7 +123,7 @@ export const getAllActiveBlogs = async (req: Request, res: Response) => {
         }
 
         const blogs = await BlogModel.find(filter)
-            .select('-content') // Don't send full content in list
+            .select('-content')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limitNum);
@@ -160,7 +143,7 @@ export const getAllActiveBlogs = async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error('❌ Error fetching active blogs:', error);
+        console.error('Error fetching active blogs:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch blogs',
@@ -168,10 +151,6 @@ export const getAllActiveBlogs = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * GET a single blog by slug
- * GET /api/blogs/:slug
- */
 export const getBlogBySlug = async (req: Request, res: Response) => {
     try {
         const { slug } = req.params;
@@ -185,7 +164,6 @@ export const getBlogBySlug = async (req: Request, res: Response) => {
             });
         }
 
-        // Increment view count
         blog.viewCount += 1;
         await blog.save();
 
@@ -195,7 +173,7 @@ export const getBlogBySlug = async (req: Request, res: Response) => {
             data: blog,
         });
     } catch (error) {
-        console.error('❌ Error fetching blog:', error);
+        console.error('Error fetching blog:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch blog',
@@ -203,10 +181,6 @@ export const getBlogBySlug = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * GET a single blog by ID (Admin)
- * GET /api/blogs/admin/:id
- */
 export const getBlogById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -226,7 +200,7 @@ export const getBlogById = async (req: Request, res: Response) => {
             data: blog,
         });
     } catch (error) {
-        console.error('❌ Error fetching blog:', error);
+        console.error('Error fetching blog:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch blog',
@@ -234,10 +208,6 @@ export const getBlogById = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * UPDATE a blog
- * PUT /api/blogs/:id
- */
 export const updateBlog = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -256,7 +226,7 @@ export const updateBlog = async (req: Request, res: Response) => {
             });
         }
 
-        console.log('✅ Blog updated:', blog.title);
+        console.log('Blog updated:', blog.title);
 
         res.status(200).json({
             success: true,
@@ -264,7 +234,7 @@ export const updateBlog = async (req: Request, res: Response) => {
             data: blog,
         });
     } catch (error) {
-        console.error('❌ Error updating blog:', error);
+        console.error('Error updating blog:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to update blog',
@@ -273,10 +243,6 @@ export const updateBlog = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * DELETE a blog
- * DELETE /api/blogs/:id
- */
 export const deleteBlog = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -290,14 +256,14 @@ export const deleteBlog = async (req: Request, res: Response) => {
             });
         }
 
-        console.log('✅ Blog deleted:', blog.title);
+        console.log('Blog deleted:', blog.title);
 
         res.status(200).json({
             success: true,
             message: 'Blog deleted successfully',
         });
     } catch (error) {
-        console.error('❌ Error deleting blog:', error);
+        console.error('Error deleting blog:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to delete blog',
@@ -305,10 +271,6 @@ export const deleteBlog = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * TOGGLE blog active status
- * PATCH /api/blogs/:id/toggle-status
- */
 export const toggleBlogStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -325,7 +287,7 @@ export const toggleBlogStatus = async (req: Request, res: Response) => {
         blog.isActive = !blog.isActive;
         await blog.save();
 
-        console.log(`✅ Blog status toggled: ${blog.title} - ${blog.isActive ? 'Active' : 'Inactive'}`);
+        console.log(`Blog status toggled: ${blog.title} - ${blog.isActive ? 'Active' : 'Inactive'}`);
 
         res.status(200).json({
             success: true,
@@ -333,7 +295,7 @@ export const toggleBlogStatus = async (req: Request, res: Response) => {
             data: blog,
         });
     } catch (error) {
-        console.error('❌ Error toggling blog status:', error);
+        console.error('Error toggling blog status:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to toggle blog status',

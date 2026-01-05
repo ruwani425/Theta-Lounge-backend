@@ -70,10 +70,8 @@ const BlogSchema: Schema = new Schema(
     }
 );
 
-// Create index for slug for faster queries
 BlogSchema.index({ slug: 1 });
 
-// Create index for active status and createdAt for client queries
 BlogSchema.index({ isActive: 1, createdAt: -1 });
 
 export default mongoose.model<IBlog>('Blog', BlogSchema);

@@ -24,11 +24,9 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        // This dynamically sets 'Access-Control-Allow-Origin' to the requester's origin
         callback(null, true); 
       } else {
         console.error(`CORS blocked for origin: ${origin}`);
@@ -38,7 +36,6 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    // Explicitly handle preflight success
     optionsSuccessStatus: 200 
   })
 );

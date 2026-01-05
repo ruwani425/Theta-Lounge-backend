@@ -13,17 +13,15 @@ import { authenticateToken, requireAdmin } from '../middlewares/auth.middleware'
 
 const router = Router();
 
-// Public routes
-router.get('/', getAllActiveBlogs); // Get all active blogs for clients
-router.get('/:slug', getBlogBySlug); // Get single blog by slug
+router.get('/', getAllActiveBlogs); 
+router.get('/:slug', getBlogBySlug); 
 
-// Admin routes
-router.post('/', authenticateToken, requireAdmin, createBlog); // Create blog
-router.get('/admin/all', authenticateToken, requireAdmin, getAllBlogsAdmin); // Get all blogs (admin)
-router.get('/admin/:id', authenticateToken, requireAdmin, getBlogById); // Get blog by ID
-router.put('/:id', authenticateToken, requireAdmin, updateBlog); // Update blog
-router.delete('/:id', authenticateToken, requireAdmin, deleteBlog); // Delete blog
-router.patch('/:id/toggle-status', authenticateToken, requireAdmin, toggleBlogStatus); // Toggle status
+router.post('/', authenticateToken, requireAdmin, createBlog); 
+router.get('/admin/all', authenticateToken, requireAdmin, getAllBlogsAdmin); 
+router.get('/admin/:id', authenticateToken, requireAdmin, getBlogById); 
+router.put('/:id', authenticateToken, requireAdmin, updateBlog); 
+router.delete('/:id', authenticateToken, requireAdmin, deleteBlog); 
+router.patch('/:id/toggle-status', authenticateToken, requireAdmin, toggleBlogStatus); 
 
 export default router;
 

@@ -16,7 +16,6 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
       actualCloseTime,
     } = req.body;
 
-    // ✅ Validation
     if (
       defaultFloatPrice === undefined ||
       cleaningBuffer === undefined ||
@@ -42,7 +41,6 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
       actualCloseTime,
     };
 
-    // ✅ Allow ONLY one settings row
     const existingSettings = await SystemSettingsModel.findOne();
 
     if (existingSettings) {
@@ -70,7 +68,6 @@ export const saveSystemSettings = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ GET API FOR FRONTEND LOAD
 export const getSystemSettings = async (req: Request, res: Response) => {
   try {
     const settings = await SystemSettingsModel.findOne();
@@ -81,25 +78,23 @@ export const getSystemSettings = async (req: Request, res: Response) => {
 };
 
 export const updateSystemSettings = async (req: Request, res: Response) => {
-  try {
-    const settingsId = req.params.id;
-    const updateData: SystemSettings = req.body;
+ try {
+    const settingsId = req.params.id;
+    const updateData: SystemSettings = req.body;
 
-    // Use findByIdAndUpdate to find the document by ID and apply the updates
-    // { new: true } returns the updated document
-    const updatedSettings = await SystemSettingsModel.findByIdAndUpdate(
-      settingsId,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedSettings = await SystemSettingsModel.findByIdAndUpdate(
+      settingsId,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
-    if (!updatedSettings) {
-      return res.status(404).json({ message: "Settings document not found." });
-    }
+    if (!updatedSettings) {
+      return res.status(404).json({ message: "Settings document not found." });
+    }
 
-    res.status(200).json(updatedSettings);
-  } catch (error) {
-    console.error("Error updating settings:", error);
-    res.status(500).json({ message: "Failed to update settings." });
-  }
+    res.status(200).json(updatedSettings);
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    res.status(500).json({ message: "Failed to update settings." });
+  }
 };

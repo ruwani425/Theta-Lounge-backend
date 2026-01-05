@@ -3,16 +3,10 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { Package } from '../interfaces/package.interface';
 
-// 1. Define a base interface for the schema that omits Mongoose-managed fields.
-// Mongoose will handle _id, createdAt, and updatedAt.
 export type IPackageBase = Omit<Package, '_id' | 'createdAt' | 'updatedAt'>;
 
 
-// 2. Extend the base interface with Mongoose Document properties.
-// This resolves the conflict by letting Mongoose define the structure of _id and timestamps.
-export interface PackageDocument extends IPackageBase, Document {
-    // Mongoose automatically adds _id: ObjectId, createdAt: Date, and updatedAt: Date
-}
+export interface PackageDocument extends IPackageBase, Document {}
 
 const PackageSchema: Schema<PackageDocument> = new Schema({
     name: {
@@ -51,9 +45,8 @@ const PackageSchema: Schema<PackageDocument> = new Schema({
         default: true,
     }
 }, {
-    timestamps: true, // Automatically manages createdAt and updatedAt (Dates)
+    timestamps: true,
 });
 
-// Create and export the Mongoose Model
 const PackageModel: Model<PackageDocument> = mongoose.model<PackageDocument>('Package', PackageSchema);
 export default PackageModel;
