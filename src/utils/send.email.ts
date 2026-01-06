@@ -10,7 +10,7 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
   });
 
   return await transporter.sendMail({
-    from: `"Theta Lounge" <${process.env.EMAIL_USER}>`,
+    from: `"Floating Theraphy" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,

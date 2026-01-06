@@ -470,7 +470,7 @@ export const addAdminUser = async (req: AuthenticatedRequest, res: Response) => 
             await user.save();
         }
 
-        const emailSubject = "Administrative Access Granted - Theta Lounge";
+        const emailSubject = "Administrative Access Granted - Floating Theraphy";
         const emailHtml = `
             <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
                 <div style="background-color: #2c3e50; padding: 20px; text-align: center; color: white;">
@@ -478,7 +478,7 @@ export const addAdminUser = async (req: AuthenticatedRequest, res: Response) => 
                 </div>
                 <div style="padding: 30px; color: #444;">
                     <p>Hello <strong>${user.name}</strong>,</p>
-                    <p>Your administrative permissions for the <strong>Theta Lounge Management System</strong> have been updated.</p>
+                    <p>Your administrative permissions for the <strong>Floating Theraphy Management System</strong> have been updated.</p>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2c3e50;">
                         <p style="margin: 0;"><strong>Assigned Permissions:</strong></p>
                         <p style="margin: 5px 0; font-family: monospace; color: #555;">${permissions.join(', ')}</p>
@@ -520,7 +520,7 @@ export const revokeAdminAccess = async (req: AuthenticatedRequest, res: Response
                 </div>
                 <div style="padding: 30px; color: #444;">
                     <p>Hello <strong>${user.name}</strong>,</p>
-                    <p>This is to inform you that your administrative access to the <strong>Theta Lounge Management System</strong> has been revoked.</p>
+                    <p>This is to inform you that your administrative access to the <strong>Floating Theraphy Management System</strong> has been revoked.</p>
                     <p>Your account role has been set to <strong>Client</strong>. If you believe this is an error, please contact the Master Admin.</p>
                 </div>
             </div>

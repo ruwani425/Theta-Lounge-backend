@@ -376,7 +376,7 @@ export const createPackageActivation = async (req: AuthenticatedRequest, res: Re
         const activationDoc = new PackageActivationModel(newActivation);
         await activationDoc.save();
 
-        const emailSubject = "Package Activation Request Received - Theta Lounge";
+        const emailSubject = "Package Activation Request Received - Floating Theraphy";
         const emailHtml = `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
                 <div style="background-color: #2c3e50; padding: 25px; text-align: center; color: white;">
@@ -585,7 +585,7 @@ export const checkAndExpirePackages = async (): Promise<void> => {
                     </div>
                     <div style="padding: 30px; color: #444; line-height: 1.6;">
                         <p>Hi <strong>${activation.fullName}</strong>,</p>
-                        <p>Your <strong>${activation.packageName}</strong> package at Theta Lounge has expired as of ${activation.expiryDate?.toDateString()}.</p>
+                        <p>Your <strong>${activation.packageName}</strong> package at Floating Theraphy has expired as of ${activation.expiryDate?.toDateString()}.</p>
                         
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #7f8c8d;">
                             <p style="margin: 5px 0;"><strong>Used Sessions:</strong> ${activation.usedCount}</p>
@@ -594,7 +594,7 @@ export const checkAndExpirePackages = async (): Promise<void> => {
 
                         <p>We hope you enjoyed your sessions! If you'd like to continue your wellness journey, you can purchase a new package through our mobile app or website.</p>
                         <br />
-                        <p>Best regards,<br/>The Theta Lounge Team</p>
+                        <p>Best regards,<br/>The Floating Theraphy Team</p>
                     </div>
                 </div>
             `;

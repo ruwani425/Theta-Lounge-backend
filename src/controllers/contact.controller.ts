@@ -6,14 +6,14 @@ export const handleContactForm = async (req: Request, res: Response) => {
   try {
     const { name, email, phone, service, message } = req.body;
 
-    const clientSubject = "We've received your message - Theta Lounge";
+    const clientSubject = "We've received your message - Floating Theraphy";
     const clientHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
         <div style="background-color: #3a7ca5; padding: 20px; text-align: center; color: white;">
           <h2>Hello ${name}!</h2>
         </div>
         <div style="padding: 30px; color: #444;">
-          <p>Thank you for reaching out to <strong>Theta Lounge</strong>.</p>
+          <p>Thank you for reaching out to <strong>Floating Theraphy</strong>.</p>
           <p>We have received your message regarding <strong>${service || 'General Inquiry'}</strong> and our team will get back to you within 24 hours.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #888;">This is an automated confirmation. No need to reply to this email.</p>
