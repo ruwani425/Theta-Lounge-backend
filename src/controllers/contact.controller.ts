@@ -27,7 +27,7 @@ export const handleContactForm = async (req: Request, res: Response) => {
     const adminEmails = admins.map(admin => admin.email);
 
     if (adminEmails.length > 0) {
-      const adminSubject = `📢 New Inquiry from ${name}`;
+      const adminSubject = `New Inquiry from ${name}`;
       const adminHtml = `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
           <h2 style="color: #1B4965;">New Contact Form Submission</h2>

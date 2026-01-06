@@ -43,7 +43,7 @@ app.use(
 
 app.use(express.json());
 app.get("/", (req, res) => {
-  res.json({ message: "Express running on Vercel 🚀" });
+  res.json({ message: "Express running on Vercel" });
 });
 app.use("/api/auth", authRoutes);
 app.use("/api/system-settings", adminRoutes);

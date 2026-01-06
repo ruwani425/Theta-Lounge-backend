@@ -14,7 +14,7 @@ export const generateToken = (userId: string, email: string, role: 'admin' | 'cl
     role,
   };
   
-  console.log('🔑 Generating token for user:', { userId, email, role });
+  console.log('Generating token for user:', { userId, email, role });
   
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRY,

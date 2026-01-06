@@ -9,7 +9,7 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
         const { dateRange = '30' } = req.query; 
         const daysBack = parseInt(dateRange as string);
 
-        console.log(`📊 [getReportsAnalytics] Fetching reports for last ${daysBack} days`);
+        console.log(`[getReportsAnalytics] Fetching reports for last ${daysBack} days`);
 
         const now = new Date();
         const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
@@ -220,7 +220,7 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
             { $limit: 5 }
         ]);
 
-        console.log('✅ [getReportsAnalytics] Reports data calculated successfully');
+        console.log('[getReportsAnalytics] Reports data calculated successfully');
 
         res.status(200).json({
             success: true,
@@ -249,7 +249,7 @@ export const getReportsAnalytics = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error('❌ [getReportsAnalytics] Error:', error);
+        console.error('[getReportsAnalytics] Error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch reports analytics',
